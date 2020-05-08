@@ -1,5 +1,5 @@
 
-def platform_headers(platform, channelID):
+def platform_headers(platform, channelID, auth = None):
     
     if platform == 'afreecatv':
         url = "http://bjapi.afreecatv.com/api/" + channelID + "/station/"
@@ -12,7 +12,7 @@ def platform_headers(platform, channelID):
     
     elif platform == 'twitch':
         url = "http://api.twitch.tv/helix/streams?user_login="
-        headers = {"Client-ID":"qvfwoq38hybxenz581b14ye2g5v4xf"}
+        headers = {"Client-ID": auth[platform]['Client-ID']}
 
     elif platform == 'youtube':
         url = "https://www.youtube.com"

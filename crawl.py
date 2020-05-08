@@ -15,10 +15,14 @@ class LiveCrawling():
         self.channelID = channelID
         self.dataset = {}
 
-        with open('littleproject/mongodb_auth.json', 'r') as f:
+        with open('mongodb_auth.json', 'r') as f:
             self.mongo_auth = json.load(f)
 
         self.conn = MongoClient('mongodb://%s:%s@%s:%s' % (self.mongo_auth['username'], self.mongo_auth['password'], self.mongo_auth['hostname'], self.mongo_auth['port']))
+        self.db = self.conn['moadata']
+        
+        collection = self.db['authorization']
+        self.auth = collection.find_one()
 
     def target_crawl(self):
         db = self.conn['moadata']
@@ -43,16 +47,13 @@ class LiveCrawling():
 
     def crawling(self):
         if self.platform == 'youtube':
-            data = self.youtube()
+            self.youtube()
         elif self.platform == 'twitch':
-            data = self.twitch()
+            self.twitch()
         elif self.platform == 'afreecatv':
-            data = self.afreecatv()
+            self.afreecatv()
         else:
             print("Platform undefined")
-            raise
-
-        return data
 
     def youtube(self):
 
@@ -92,11 +93,9 @@ class LiveCrawling():
             print('[{}]'.format(urldata.status_code))
 
     def twitch(self):
-    
-        url, headers = platform_headers(self.platform, self.channelID)
-        urldata = requests.get(url + self.channelID, headers=headers)
 
-        print(urldata.text)
+        url, headers = platform_headers(self.platform, self.channelID, auth = self.auth)
+        urldata = requests.get(url + self.channelID, headers=headers)
 
         if urldata.status_code == 200:
             urlJsonData = json.loads(urldata.text)
@@ -154,3 +153,4 @@ if __name__ == '__main__':
     channelID = 'UCsOW9TPy2TKkqCchUHL04Fg'
 
     crl = LiveCrawling(platform = platform, channelID= channelID)
+    crl.target_crawl()
