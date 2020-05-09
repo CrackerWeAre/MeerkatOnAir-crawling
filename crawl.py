@@ -40,8 +40,7 @@ class LiveCrawling():
                 post_id = collection.insert_one(self.dataset)
         # update
         except pymongo.errors.DuplicateKeyError:
-            post_id = collection.update_one({'_id': self.dataset['_id']}, {"$set": self.dataset}, upsert=True)
-
+            post_id = collection.update_one({'_id': self.dataset['_id']}, {"$set": self.dataset})
         print(self.channel, 'Done')
 
     def crawling(self):
@@ -51,18 +50,23 @@ class LiveCrawling():
             self.channelID = target['channelID']
             self.channel = target['channel']
   
-            if self.platform == 'youtube':
-                self.youtube()
-            elif self.platform == 'twitch':
-                self.twitch()
-            elif self.platform == 'afreecatv':
-                self.afreecatv()
-            else:
-                print(self.platform, self.channelID)
-                print("Platform undefined")
+            try:
+                if self.platform == 'youtube':
+                    self.youtube()
+                elif self.platform == 'twitch':
+                    self.twitch()
+                elif self.platform == 'afreecatv':
+                    self.afreecatv()
+                else:
+                    print(self.platform, self.channelID)
+                    print("Platform undefined")
+                    continue
+
+                self.mongo_insert()
+            except:
+                print(self.platform, self.channel, 'Error')
                 continue
 
-            self.mongo_insert()
 
     def youtube(self):
 
