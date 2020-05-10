@@ -41,7 +41,7 @@ class LiveCrawling():
         # update
         except pymongo.errors.DuplicateKeyError:
             post_id = collection.update_one({'_id': self.dataset['_id']}, {"$set": self.dataset})
-        print(self.channel, 'Done')
+        print(self.channel, 'Done', self.dataset['updateDate'])
 
     def crawling(self):
         for target in self.crawl_target():
