@@ -11,4 +11,3 @@ WORKDIR /app
 
 RUN touch /tmp/meercatonair.log
 RUN pip3 install -r requirements.txt
-CMD python3 crawl.py >> /tmp/meercatonair.log 2>&1
