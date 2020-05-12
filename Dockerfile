@@ -9,6 +9,5 @@ RUN mkdir -p /app
 COPY . /app
 WORKDIR /app
 
-RUN touch /tmp/meercatonair.log
 RUN pip3 install -r requirements.txt
 CMD /bin/bash
