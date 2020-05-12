@@ -63,8 +63,8 @@ class LiveCrawling():
                     continue
 
                 self.mongo_insert()
-            except:
-                print(self.platform, self.channel, 'Error')
+            except Exception as e:
+                print(self.platform, self.channel, 'Error', e)
                 continue
 
 
