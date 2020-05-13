@@ -7,6 +7,7 @@ from datetime import datetime
 import pymongo
 from pymongo import MongoClient 
 from requests_utils import platform_headers
+from selenium.webdriver.chrome import webdriver, options
 
 class LiveCrawling():
 
@@ -15,6 +16,8 @@ class LiveCrawling():
         self.channel = None
         self.channelID = None
         self.dataset = {}
+        #self.options = options.Options.add_argument()
+        self.driver = webdriver.WebDriver('driver/chromedriver.exe')
 
         with open('mongodb_auth.json', 'r') as f:
             self.mongo_auth = json.load(f)
@@ -66,6 +69,11 @@ class LiveCrawling():
             except Exception as e:
                 print(self.platform, self.channel, 'Error', e)
                 continue
+
+    def vlive(self):
+
+        url, _ = platform_headers(self.platform, self.channelID)
+        urldata = requests.get(url)
 
 
     def youtube(self):
