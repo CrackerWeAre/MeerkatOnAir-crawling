@@ -6,7 +6,6 @@ RUN ln -snf /usr/share/zoneinfo/Asia/Seoul /etc/localtime && \
     echo "Asia/Seoul" > /etc/timezone
 
 RUN mkdir -p /app
-COPY . /app
 WORKDIR /app
 
 RUN pip3 install -r requirements.txt
