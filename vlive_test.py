@@ -12,12 +12,14 @@ channel = '엘리스'
 
 dataset ={}
 options = webdriver.ChromeOptions()
-options.add_argument('headless')
-options.add_argument('window-size=1920x1080')
-options.add_argument("disable-gpu")
-options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36")
+options.add_argument('--headless')
+options.add_argument('--disable-extensions')
+options.add_argument('--no-sandbox')
+#options.add_argument('window-size=1920x1080')
+#options.add_argument("disable-gpu")
+#options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36")
 
-driver = webdriver.Chrome('driver/chromedriver.exe', options=options)
+driver = webdriver.Chrome('driver/chromedriver', options=options)
 
 url, _ = platform_headers(platform, channelID)
 

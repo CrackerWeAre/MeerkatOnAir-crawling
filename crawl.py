@@ -17,9 +17,11 @@ class LiveCrawling():
         self.channelID = None
         self.dataset = {}
         self.options = webdriver.ChromeOptions()
-        self.options.add_argument('headless')
+        self.options.add_argument('--headless')
+        self.options.add_argument('--disable-extensions')
+        self.options.add_argument('--no-sandbox')
         #self.options.add_argument('window-size=1920x1080')
-        self.options.add_argument("disable-gpu")
+        #self.options.add_argument("disable-gpu")
         self.options.add_argument("user-agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.100 Safari/537.36")
 
         with open('mongodb_auth.json', 'r') as f:

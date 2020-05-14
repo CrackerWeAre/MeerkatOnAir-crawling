@@ -14,7 +14,8 @@ COPY requirements.txt /app
 WORKDIR /app
 
 RUN wget -N http://chromedriver.storage.googleapis.com/81.0.4044.138/chromedriver_linux64.zip -P driver/
-RUN unzip driver/chromedriver_linux64.zip driver/
+RUN unzip driver/chromedriver_linux64.zip
+RUN mv chromedriver driver/
 
 RUN pip3 install -r requirements.txt
 CMD /bin/bash
