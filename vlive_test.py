@@ -1,5 +1,5 @@
 from requests_utils import platform_headers
-from selenium.webdriver.chrome import webdriver, options
+from selenium import webdriver
 
 from bs4 import BeautifulSoup
 import requests
@@ -7,12 +7,17 @@ import time
 from datetime import datetime
 
 platform = 'vlive'
-channelID = 'DE341F'
-channel = 'itzy'
+channelID = 'DED40B'
+channel = '엘리스'
 
 dataset ={}
+options = webdriver.ChromeOptions()
+options.add_argument('headless')
+options.add_argument('window-size=1920x1080')
+options.add_argument("disable-gpu")
+options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36")
 
-driver = webdriver.WebDriver('driver/chromedriver.exe')
+driver = webdriver.Chrome('driver/chromedriver.exe', options=options)
 
 url, _ = platform_headers(platform, channelID)
 
@@ -38,6 +43,10 @@ if not soup.select_one('.onair') == None:
     dataset['liveAttdc'] = soup.select_one('.onair .article_link .info.chat').text
 else:
     dataset['onLive'] = False
+    dataset['_id'] = channelID
+    dataset['channel'] = channel
+    dataset['platform'] = platform
+    dataset['updateDate'] = datetime.now().ctime()
 
 
 print(dataset)
