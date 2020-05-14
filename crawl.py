@@ -66,7 +66,7 @@ class LiveCrawling():
                 elif self.platform == 'afreecatv':
                     self.afreecatv()
                 elif self.platform == 'vlive':
-                    self.driver = webdriver.Chrome('driver/chromedriver.exe', options=self.options)
+                    self.driver = webdriver.Chrome('driver/chromedriver_linux64', options=self.options)
                     self.vlive()
                     self.driver.quit()
                 else:
