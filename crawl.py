@@ -166,14 +166,9 @@ class LiveCrawling():
         url, headers = platform_headers(self.platform, self.channelID, auth = self.auth)
         urldata = requests.get(url + self.channelID, headers=headers)
 
-        # 해결될때까지 onAir = False
-        urldata.status_code = 200
-
         if urldata.status_code == 200:
             urlJsonData = json.loads(urldata.text)
             
-            # 해결될때까지 onAir = False
-            urlJsonData = {'data': [], 'pagination': {}}
             if urlJsonData != {'data': [], 'pagination': {}} :
                 self.dataset['_id'] = self.channelID
 
