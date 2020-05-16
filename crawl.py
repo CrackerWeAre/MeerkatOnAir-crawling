@@ -11,7 +11,7 @@ from selenium import webdriver
 
 class LiveCrawling():
 
-    def __init__(self):
+    def __init__(self, debug=False):
         self.platform = None
         self.channel = None
         self.channelID = None

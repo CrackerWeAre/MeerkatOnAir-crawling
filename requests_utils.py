@@ -14,7 +14,8 @@ def platform_headers(platform, channelID, auth = None):
         url = "http://api.twitch.tv/helix/streams?user_login="
         headers = {
             "Client-ID": auth[platform]['Client-ID'],
-            "Accept": "application/vnd.twitchtv.v5+json"
+            "Accept": "application/vnd.twitchtv.v5+json",
+            "Authorization": "Bearer " + auth[platform]['Authorization'] 
             }
 
     elif platform == 'youtube':
