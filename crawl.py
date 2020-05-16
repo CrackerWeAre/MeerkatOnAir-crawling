@@ -216,8 +216,7 @@ class LiveCrawling():
 
                 self.dataset['onLive'] = True
                 self.dataset['updateDate'] = datetime.now().ctime()
-
-                self.dataset['imgDataSrc'] = "liveimg.afreecatv.com/" + str(urlJsonData['broad']['broad_no']) + ".gif"
+                self.dataset['imgDataSrc'] = "//liveimg.afreecatv.com/" + str(urlJsonData['broad']['broad_no']) + ".gif"
                 self.dataset['liveDataHref'] = "http://play.afreecatv.com/" + self.channelID + "/" + str(urlJsonData['broad']['broad_no'])
                 self.dataset['liveDataTitle'] = urlJsonData['broad']['broad_title']
                 self.dataset['liveAttdc'] = urlJsonData['broad']['current_sum_viewer']
