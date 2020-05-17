@@ -23,20 +23,16 @@ class LiveCrawling():
         self.options.add_argument('--disable-extensions')
         self.options.add_argument('--no-sandbox')
         self.options.add_argument("user-agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.100 Safari/537.36")
-
+       
         with open('mongodb_auth.json', 'r') as f:
             self.mongo_auth = json.load(f)
-
-        self.conn = MongoClient('mongodb://%s:%s@%s:%s' % (self.mongo_auth['username'], self.mongo_auth['password'], self.mongo_auth['hostname'], self.mongo_auth['port']))
+            
+        self.conn = MongoClient('mongodb://%s:%s@%s:%s' % (self.mongo_auth['username'], self.mongo_auth['password'], self.mongo_auth['hostname'], self.mongo_auth['port']),
+                    connect=False)
 
         self.db_admin = self.conn['admin']
         collection = self.db_admin['authorization']
         self.auth = collection.find_one()
-
-    def crawl_target(self):
-        db = self.conn['meerkatonair']
-        collection = db['crawl_target']
-        return collection.find()
 
     def mongo_insert(self):
         db = self.conn['meerkatonair']
@@ -66,7 +62,7 @@ class LiveCrawling():
             elif self.platform == 'afreecatv':
                 self.afreecatv()
             elif self.platform == 'vlive':
-                if not self.debug:
+                if self.debug:
                     self.driver = webdriver.Chrome('driver/chromedriver', options=self.options)
                     self.vlive()
                     self.driver.quit()
@@ -228,12 +224,24 @@ class LiveCrawling():
             print('[{}]'.format(urldata.status_code))
 
 def process(target):
+    crl = LiveCrawling(debug=False)
     crl.crawling(target=target)
 
-if __name__ == '__main__':
+def crawl_target(mongo_auth):
     
-    crl = LiveCrawling(debug=False)
-    target = crl.crawl_target()
+    conn = MongoClient('mongodb://%s:%s@%s:%s' % (mongo_auth['username'], mongo_auth['password'], mongo_auth['hostname'], mongo_auth['port']),
+                connect=False)
+    db = conn['meerkatonair']
+    collection = db['crawl_target']
+    conn.close()
+    return collection.find()
+
+if __name__ == '__main__':
+
+    with open('mongodb_auth.json', 'r') as f:
+        mongo_auth = json.load(f)
+    
+    target = crawl_target(mongo_auth)
     pool = Pool(processes=16)
 
     t = [list(i.items()) for i in list(target)]
