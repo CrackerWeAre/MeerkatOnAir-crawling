@@ -1,13 +1,14 @@
-from bs4 import BeautifulSoup
 import requests
 import json
 import time
-from datetime import datetime
-
 import pymongo
+
+from datetime import datetime
+from bs4 import BeautifulSoup
 from pymongo import MongoClient 
 from requests_utils import platform_headers
 from selenium import webdriver
+from multiprocessing import Pool
 
 class LiveCrawling():
 
@@ -15,13 +16,12 @@ class LiveCrawling():
         self.platform = None
         self.channel = None
         self.channelID = None
+        self.debug = debug
         self.dataset = {}
         self.options = webdriver.ChromeOptions()
         self.options.add_argument('--headless')
         self.options.add_argument('--disable-extensions')
         self.options.add_argument('--no-sandbox')
-        #self.options.add_argument('window-size=1920x1080')
-        #self.options.add_argument("disable-gpu")
         self.options.add_argument("user-agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.100 Safari/537.36")
 
         with open('mongodb_auth.json', 'r') as f:
@@ -51,38 +51,35 @@ class LiveCrawling():
             post_id = collection.update_one({'_id': self.dataset['_id']}, {"$set": self.dataset})
         print(self.platform, self.channel, 'Done', self.dataset['updateDate'])
 
-    def crawling(self):
-        start_time = time.time()
+    def crawling(self, target):
+        target = {k:v for k,v in target}
+        self.dataset = {}
+        try:
+            self.platform = target['platform']
+            self.channelID = target['channelID']
+            self.channel = target['channel']
 
-        for target in self.crawl_target():
-            self.dataset = {}
-            try:
-                self.platform = target['platform']
-                self.channelID = target['channelID']
-                self.channel = target['channel']
-
-                if self.platform == 'youtube':
-                    self.youtube()
-                elif self.platform == 'twitch':
-                    self.twitch()
-                elif self.platform == 'afreecatv':
-                    self.afreecatv()
-                elif self.platform == 'vlive':
+            if self.platform == 'youtube':
+                self.youtube()
+            elif self.platform == 'twitch':
+                self.twitch()
+            elif self.platform == 'afreecatv':
+                self.afreecatv()
+            elif self.platform == 'vlive':
+                if not self.debug:
                     self.driver = webdriver.Chrome('driver/chromedriver', options=self.options)
                     self.vlive()
                     self.driver.quit()
-                else:
-                    print(self.platform, self.channelID)
-                    print("Platform undefined")
-                    continue
+            else:
+                print(self.platform, self.channelID)
+                print("Platform undefined")
 
+            if not self.debug:
                 self.mongo_insert()
-            except Exception as e:
-                print(self.platform, self.channel, 'Error', e)
-                continue
         
-        print('Total : ', time.time() - start_time)
-
+        except Exception as e:
+            print(self.platform, self.channel, 'Error', e)
+            
     def vlive(self):
 
         url, _ = platform_headers(self.platform, self.channelID)
@@ -91,7 +88,6 @@ class LiveCrawling():
         time.sleep(0.5)
         soup = BeautifulSoup(self.driver.page_source, 'html.parser')
 
-        onair = soup.select_one('.onair')
         if not soup.select_one('.onair') == None:
             self.dataset['onLive'] = True
             self.dataset['_id'] = self.channelID
@@ -153,8 +149,6 @@ class LiveCrawling():
                 self.dataset['channel'] = self.channel
                 self.dataset['channelID'] = self.channelID
                 self.dataset['platform'] = self.platform
-                # self.dataset['creatorDataHref'] = url + creatorData.attrs['href']
-                # self.dataset['creatorDataName'] = creatorData.text
 
                 self.dataset['onLive'] = False
                 self.dataset['updateDate'] = datetime.now().ctime()
@@ -227,16 +221,23 @@ class LiveCrawling():
                 self.dataset['channel'] = self.channel
                 self.dataset['platform'] = self.platform
                 self.dataset['channelID'] = self.channel
-                # self.dataset['creatorDataHref'] = "http://bj.afreecatv.com/" + self.channelID
-                # self.dataset['creatorDataName'] = urlJsonData['station']['user_nick']
 
                 self.dataset['onLive'] = False
                 self.dataset['updateDate'] = datetime.now().ctime()
         else:
             print('[{}]'.format(urldata.status_code))
 
+def process(target):
+    crl.crawling(target=target)
 
 if __name__ == '__main__':
     
-    crl = LiveCrawling()
-    crl.crawling()
+    crl = LiveCrawling(debug=False)
+    target = crl.crawl_target()
+    pool = Pool(processes=16)
+
+    t = [list(i.items()) for i in list(target)]
+
+    s = time.time()    
+    pool.map(process,t)
+    print('Total : ', time.time() -s)
