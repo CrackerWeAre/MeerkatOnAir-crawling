@@ -26,7 +26,7 @@ class LiveCrawling():
        
         with open('mongodb_auth.json', 'r') as f:
             self.mongo_auth = json.load(f)
-            
+
         self.conn = MongoClient('mongodb://%s:%s@%s:%s' % (self.mongo_auth['username'], self.mongo_auth['password'], self.mongo_auth['hostname'], self.mongo_auth['port']),
                     connect=False)
 
@@ -62,10 +62,9 @@ class LiveCrawling():
             elif self.platform == 'afreecatv':
                 self.afreecatv()
             elif self.platform == 'vlive':
-                if self.debug:
-                    self.driver = webdriver.Chrome('driver/chromedriver', options=self.options)
-                    self.vlive()
-                    self.driver.quit()
+                self.driver = webdriver.Chrome('driver/chromedriver', options=self.options)
+                self.vlive()
+                self.driver.quit()
             else:
                 print(self.platform, self.channelID)
                 print("Platform undefined")
