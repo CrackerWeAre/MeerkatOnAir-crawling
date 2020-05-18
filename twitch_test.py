@@ -6,7 +6,7 @@ import time
 from datetime import datetime
 
 platform = "twitch"
-channelID = "woowakgood"
+channelID = "kimdoe"
 
 auth = {
     'twitch' : {
@@ -16,6 +16,9 @@ auth = {
 }
 
 url, headers = platform_headers(platform, channelID, auth = auth)
-urldata = requests.get(url + channelID, headers=headers)
+# urldata = requests.get(url + channelID, headers=headers)
 
-print(urldata.text)
+
+res = requests.get('https://api.twitch.tv/helix/games?id='+str(509538) , headers=headers).json()['data'][0]['name']
+
+print(res)

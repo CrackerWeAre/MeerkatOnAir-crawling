@@ -1,3 +1,4 @@
+import requests
 
 def platform_headers(platform, channelID, auth = None):
     
@@ -29,3 +30,33 @@ def platform_headers(platform, channelID, auth = None):
                 }
 
     return url, headers
+
+def parse_category(platform, id, headers=None):
+
+    if platform == 'afreecatv':
+        category = ''
+        detail = ''
+    
+    elif platform == 'twitch':
+        if id == 26936:
+            category = 'Music'
+            detail = ''
+        elif id == 509667:
+            category = 'Food & Drink'
+            detail = ''
+        elif id == 509667:
+            category = 'Just Chatting'
+            detail = ''
+        else:
+            category = 'Game'
+            detail = requests.get('https://api.twitch.tv/helix/games?id='+str(509538) , headers=headers).json()['data'][0]['name']
+
+    elif platform == 'youtube':
+        category = ''
+        detail = ''
+
+    elif platform == 'vlive':
+        category = 'Entertainment'
+        detail = ''
+
+    return category, detail

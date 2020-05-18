@@ -6,7 +6,7 @@ import pymongo
 from datetime import datetime
 from bs4 import BeautifulSoup
 from pymongo import MongoClient 
-from requests_utils import platform_headers
+from requests_utils import platform_headers, parse_category
 from selenium import webdriver
 from multiprocessing import Pool
 
@@ -175,6 +175,8 @@ class LiveCrawling():
                 self.dataset['liveDataHref'] = "http://twitch.tv/" + self.channelID
                 self.dataset['liveDataTitle'] = urlJsonData['data'][0]['title']
                 self.dataset['liveAttdc'] = urlJsonData['data'][0]['viewer_count']
+
+                self.dataset['category'], self.dataset['detail'] = parse_category(self.platform, urlJsonData['data'][0]['game_id'], headers=headers)
             else :
                 self.dataset['_id'] = self.channelID
 
