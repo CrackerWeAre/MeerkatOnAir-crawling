@@ -5,7 +5,6 @@
 driver/
 *.log
 *.json
-!mongodb_auth.json
 
 ### Python ###
 # Byte-compiled / optimized / DLL files
