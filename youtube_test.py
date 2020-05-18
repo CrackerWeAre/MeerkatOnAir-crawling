@@ -1,7 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
 
-channelID = 'UC5F_d3cnqsl_6syKejWVWxw'
+channelID = 'UCsOW9TPy2TKkqCchUHL04Fg'
 
 url = 'https://www.youtube.com'
 
@@ -15,12 +15,6 @@ if urldata.status_code == 200:
 
     if dataLiveConfirm.find('live') > 0 :
         liveData = link[0].select_one('div.yt-lockup-content > h3 > a')
+        AttdData = link[0].select_one('div.yt-lockup-content > div.yt-lockup-meta > ul > li ')
 
-
-res = requests.get(url + liveData['href'])
-
-soup = BeautifulSoup(res.text, 'html.parser')
-# text = soup.select_one('#content > yt-formatted-string > a').text
-# print(text)
-
-print(soup)
+        print(AttdData.text.partition('명')[0].replace(',',''))

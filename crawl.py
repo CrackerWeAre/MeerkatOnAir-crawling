@@ -136,7 +136,7 @@ class LiveCrawling():
                 self.dataset['imgDataSrc'] = link[0].select_one('div.yt-lockup-thumbnail > span > a > span > span > span > img').attrs['data-thumb']
                 self.dataset['liveDataHref'] = url + liveData.attrs['href']
                 self.dataset['liveDataTitle'] = liveData.attrs['title']
-                self.dataset['liveAttdc'] = AttdData.text.partition('명')[0]
+                self.dataset['liveAttdc'] = AttdData.text.partition('명')[0].replace(',','')
             else :
                 creatorData = link[0].select_one('div.yt-lockup-content > div.yt-lockup-byline > a')
 
