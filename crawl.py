@@ -62,9 +62,10 @@ class LiveCrawling():
             elif self.platform == 'afreecatv':
                 self.afreecatv()
             elif self.platform == 'vlive':
-                self.driver = webdriver.Chrome('driver/chromedriver', options=self.options)
-                self.vlive()
-                self.driver.quit()
+                #self.driver = webdriver.Chrome('driver/chromedriver', options=self.options)
+                #self.vlive()
+                #self.driver.quit()
+                print('vlive passed')
             else:
                 print(self.platform, self.channelID)
                 print("Platform undefined")
