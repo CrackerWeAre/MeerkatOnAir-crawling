@@ -1,5 +1,13 @@
 import requests
 
+def replace_ascii(string):
+    string = string.replace('%22','"')
+    string = string.replace('%3A',':')
+    string = string.replace('%2F','/')
+    string = string.replace('%3F','?')
+    string = string.replace('%3D','=')
+    return string
+
 def platform_headers(platform, channelID, auth = None):
     
     if platform == 'afreecatv':

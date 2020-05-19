@@ -6,7 +6,7 @@ import pymongo
 from datetime import datetime
 from bs4 import BeautifulSoup
 from pymongo import MongoClient 
-from requests_utils import platform_headers, parse_category
+from requests_utils import *
 from selenium import webdriver
 from multiprocessing import Pool
 
@@ -88,7 +88,7 @@ class LiveCrawling():
 
         driver = self.init_webdriver()
         driver.get(url)
-        time.sleep(0.5)
+        time.sleep(0.6)
         soup = BeautifulSoup(driver.page_source, 'html.parser')
 
         if not soup.select_one('.onair') == None:
@@ -102,7 +102,8 @@ class LiveCrawling():
 
             self.dataset['updateDate'] = datetime.now().ctime()
 
-            self.dataset['imgDataSrc'] = soup.select_one('.onair .article_link .article_img img')['src']
+            src = soup.select_one('.onair .article_link .article_img img')['src']
+            self.dataset['imgDataSrc'] = replace_ascii(l).split('src="')[-1].split('"&')[0]
             self.dataset['liveDataHref'] = soup.select_one('.onair .article_link')['href']
             self.dataset['liveDataTitle'] = soup.select_one('.onair .article_link .title').text
             self.dataset['liveAttdc'] = soup.select_one('.onair .article_link .info.chat').text
