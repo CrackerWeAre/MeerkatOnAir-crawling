@@ -34,6 +34,15 @@ class LiveCrawling():
         collection = self.db_admin['authorization']
         self.auth = collection.find_one()
 
+    # webdriver는 single-thread 라서 __init__에 있으면 multiprocessing 오류가 뜸.
+    # process별로 개별 생성해야한다.
+    def init_webdriver(self):
+        driver = webdriver.Chrome('driver/chromedriver', options=self.options)
+        return driver
+
+    def close_webdriver(self, driver):
+        driver.quit()
+
     def mongo_insert(self):
         db = self.conn['meerkatonair']
         collection = db['live_list']
@@ -61,11 +70,8 @@ class LiveCrawling():
                 self.twitch()
             elif self.platform == 'afreecatv':
                 self.afreecatv()
-            elif self.platform == 'vlive':
-                #self.driver = webdriver.Chrome('driver/chromedriver', options=self.options)
-                #self.vlive()
-                #self.driver.quit()
-                print('vlive passed')
+            elif self.platform == 'vlive':                
+                self.vlive()
             else:
                 print(self.platform, self.channelID)
                 print("Platform undefined")
@@ -80,9 +86,10 @@ class LiveCrawling():
 
         url, _ = platform_headers(self.platform, self.channelID)
 
-        self.driver.get(url)
+        driver = self.init_webdriver()
+        driver.get(url)
         time.sleep(0.5)
-        soup = BeautifulSoup(self.driver.page_source, 'html.parser')
+        soup = BeautifulSoup(driver.page_source, 'html.parser')
 
         if not soup.select_one('.onair') == None:
             self.dataset['onLive'] = True
@@ -105,6 +112,8 @@ class LiveCrawling():
             self.dataset['channel'] = self.channel
             self.dataset['platform'] = self.platform
             self.dataset['updateDate'] = datetime.now().ctime()
+
+        self.close_webdriver(driver)
 
     def youtube(self):
 
