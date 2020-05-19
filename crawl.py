@@ -103,7 +103,7 @@ class LiveCrawling():
             self.dataset['updateDate'] = datetime.now().ctime()
 
             src = soup.select_one('.onair .article_link .article_img img')['src']
-            self.dataset['imgDataSrc'] = replace_ascii(l).split('src="')[-1].split('"&')[0]
+            self.dataset['imgDataSrc'] = replace_ascii(src).split('src="')[-1].split('"&')[0]
             self.dataset['liveDataHref'] = soup.select_one('.onair .article_link')['href']
             self.dataset['liveDataTitle'] = soup.select_one('.onair .article_link .title').text
             self.dataset['liveAttdc'] = soup.select_one('.onair .article_link .info.chat').text
