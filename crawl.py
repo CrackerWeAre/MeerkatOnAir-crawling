@@ -96,6 +96,7 @@ class LiveCrawling():
             self.dataset['onLive'] = True
             self.dataset['_id'] = self.channelID
             self.dataset['channel'] = self.channel
+            self.dataset['channelID'] = self.channelID
             self.dataset['platform'] = self.platform
 
             self.dataset['creatorDataHref'] = url
@@ -113,6 +114,7 @@ class LiveCrawling():
             self.dataset['_id'] = self.channelID
             self.dataset['channel'] = self.channel
             self.dataset['platform'] = self.platform
+            self.dataset['channelID'] = self.channelID
             self.dataset['updateDate'] = datetime.now().ctime()
 
         self.close_webdriver(driver)
