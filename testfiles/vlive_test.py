@@ -7,7 +7,7 @@ import time
 from datetime import datetime
 
 platform = 'vlive'
-channelID = 'DED40B'
+channelID = 'E8D2CB'
 channel = '엘리스'
 
 dataset ={}
