@@ -107,7 +107,7 @@ class LiveCrawling():
             self.dataset['imgDataSrc'] = replace_ascii(src).split('src="')[-1].split('"&')[0]
             self.dataset['liveDataHref'] = soup.select_one('.onair .article_link')['href']
             self.dataset['liveDataTitle'] = soup.select_one('.onair .article_link .title').text
-            self.dataset['liveAttdc'] = soup.select_one('.onair .article_link .info.chat').text.replace('chat count','').replace('K','000')
+            self.dataset['liveAttdc'] = int(soup.select_one('.onair .article_link .info.chat').text.replace('chat count','').replace('K','000'))
         else:
             self.dataset['onLive'] = False
             self.dataset['_id'] = self.channelID
@@ -147,7 +147,7 @@ class LiveCrawling():
                 self.dataset['imgDataSrc'] = link[0].select_one('div.yt-lockup-thumbnail > span > a > span > span > span > img').attrs['data-thumb']
                 self.dataset['liveDataHref'] = url + liveData.attrs['href']
                 self.dataset['liveDataTitle'] = liveData.attrs['title']
-                self.dataset['liveAttdc'] = AttdData.text.partition('명')[0].replace(',','')
+                self.dataset['liveAttdc'] = int(AttdData.text.partition('명')[0].replace(',',''))
             else :
                 creatorData = link[0].select_one('div.yt-lockup-content > div.yt-lockup-byline > a')
 
