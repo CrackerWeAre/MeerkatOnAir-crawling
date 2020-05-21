@@ -71,11 +71,11 @@ class LiveCrawling():
                 self.twitch()
             elif self.platform == 'afreecatv':
                 self.afreecatv()
-            #elif self.platform == 'vlive':                
-            #    self.vlive()
+            elif self.platform == 'vlive':        
+                pass        
+                #self.vlive()
             else:
-                print(self.platform, self.channelID)
-                print("Platform undefined")
+                print(self.platform, self.channelID, "Platform undefined")
 
             if not self.debug:
                 self.mongo_insert()
