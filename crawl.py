@@ -157,7 +157,7 @@ class LiveCrawling():
             else :
                 creatorData = link[0].select_one('div.yt-lockup-content > div.yt-lockup-byline > a')
 
-                self.dataset['_id'] = self.platform + self.channelID
+                self.dataset['_uniq'] = self.platform + self.channelID
 
                 self.dataset['channel'] = self.channel
                 self.dataset['channelID'] = self.channelID
