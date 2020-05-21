@@ -71,8 +71,8 @@ class LiveCrawling():
                 self.twitch()
             elif self.platform == 'afreecatv':
                 self.afreecatv()
-            elif self.platform == 'vlive':                
-                self.vlive()
+            #elif self.platform == 'vlive':                
+            #    self.vlive()
             else:
                 print(self.platform, self.channelID)
                 print("Platform undefined")
