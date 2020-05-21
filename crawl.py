@@ -49,12 +49,15 @@ class LiveCrawling():
         collection = db['live_list']
 
         # insert
-        try:
-            if self.dataset != {}:
-                post_id = collection.insert_one(self.dataset)
-        # update
-        except pymongo.errors.DuplicateKeyError:
-            post_id = collection.update_one({'_uniq': self.platform + self.channelID}, {"$set": self.dataset})
+        # try:
+        #     if self.dataset != {}:
+        #         post_id = collection.insert_one(self.dataset)
+        # # update
+        # except pymongo.errors.DuplicateKeyError:
+        #     post_id = collection.update_one({'_uniq': self.platform + self.channelID}, {"$set": self.dataset})
+
+        if self.dataset != {}:
+            post_id = collection.update_one({'_uniq': self.platform + self.channelID}, {"$set": self.dataset}, upsert=True)
         # print(self.platform, self.channel, 'Done', self.dataset['updateDate'])
 
     def crawling(self, target):
