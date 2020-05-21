@@ -54,7 +54,7 @@ class LiveCrawling():
                 post_id = collection.insert_one(self.dataset)
         # update
         except pymongo.errors.DuplicateKeyError:
-            post_id = collection.update_one({'_id': self.dataset['_id']}, {"$set": self.dataset})
+            post_id = collection.update_one({'_uniq': self.platform + self.channelID}, {"$set": self.dataset})
         print(self.platform, self.channel, 'Done', self.dataset['updateDate'])
 
     def crawling(self, target):
@@ -93,8 +93,9 @@ class LiveCrawling():
         soup = BeautifulSoup(driver.page_source, 'html.parser')
 
         if not soup.select_one('.onair') == None:
-            self.dataset['onLive'] = True
-            self.dataset['_id'] = self.channelID
+            
+            self.dataset['_uniq'] = self.platform + self.channelID
+
             self.dataset['channel'] = self.channel
             self.dataset['channelID'] = self.channelID
             self.dataset['platform'] = self.platform
@@ -102,6 +103,7 @@ class LiveCrawling():
             self.dataset['creatorDataHref'] = url
             self.dataset['creatorDataName'] = soup.select_one('.channel_info_area .name').text
 
+            self.dataset['onLive'] = True
             self.dataset['updateDate'] = datetime.now().ctime()
 
             src = soup.select_one('.onair .article_link .article_img img')['src']
@@ -110,12 +112,15 @@ class LiveCrawling():
             self.dataset['liveDataTitle'] = soup.select_one('.onair .article_link .title').text
             self.dataset['liveAttdc'] = int(soup.select_one('.onair .article_link .info.chat').text.replace('chat count','').replace('K','000'))
         else:
-            self.dataset['onLive'] = False
-            self.dataset['_id'] = self.channelID
+            self.dataset['_uniq'] = self.platform + self.channelID
+
             self.dataset['channel'] = self.channel
             self.dataset['platform'] = self.platform
             self.dataset['channelID'] = self.channelID
+
+            self.dataset['onLive'] = False
             self.dataset['updateDate'] = datetime.now().ctime()
+            
 
         self.close_webdriver(driver)
 
@@ -135,7 +140,7 @@ class LiveCrawling():
                 AttdData = link[0].select_one('div.yt-lockup-content > div.yt-lockup-meta > ul > li ')
                 creatorData = link[0].select_one('div.yt-lockup-content > div.yt-lockup-byline > a')
 
-                self.dataset['_id'] = self.channelID
+                self.dataset['_uniq'] = self.platform + self.channelID
 
                 self.dataset['channel'] = self.channel
                 self.dataset['channelID'] = self.channelID
@@ -153,7 +158,7 @@ class LiveCrawling():
             else :
                 creatorData = link[0].select_one('div.yt-lockup-content > div.yt-lockup-byline > a')
 
-                self.dataset['_id'] = self.channelID
+                self.dataset['_id'] = self.platform + self.channelID
 
                 self.dataset['channel'] = self.channel
                 self.dataset['channelID'] = self.channelID
@@ -173,10 +178,10 @@ class LiveCrawling():
             urlJsonData = json.loads(urldata.text)
             
             if urlJsonData != {'data': [], 'pagination': {}} :
-                self.dataset['_id'] = self.channelID
+                self.dataset['_uniq'] = self.platform + self.channelID
 
                 self.dataset['channel'] = self.channel
-                self.dataset['channelID'] = self.channel
+                self.dataset['channelID'] = self.channelID
                 self.dataset['platform'] = self.platform
                 self.dataset['creatorDataHref'] = "http://twitch.tv/" + self.channelID
                 self.dataset['creatorDataName'] = urlJsonData['data'][0]['user_name']
@@ -191,10 +196,10 @@ class LiveCrawling():
 
                 self.dataset['category'], self.dataset['detail'] = parse_category(self.platform, urlJsonData['data'][0]['game_id'], headers=headers)
             else :
-                self.dataset['_id'] = self.channelID
+                self.dataset['_uniq'] = self.platform + self.channelID
 
                 self.dataset['channel'] = self.channel
-                self.dataset['channelID'] = self.channel
+                self.dataset['channelID'] = self.channelID
                 self.dataset['platform'] = self.platform
 
                 self.dataset['onLive'] = False
@@ -211,7 +216,7 @@ class LiveCrawling():
             urlJsonData=json.loads(urldata.text)
 
             if urlJsonData['broad']:
-                self.dataset['_id'] = self.channelID
+                self.dataset['_uniq'] = self.platform + self.channelID
 
                 self.dataset['channel'] = self.channel
                 self.dataset['platform'] = self.platform
@@ -227,7 +232,7 @@ class LiveCrawling():
                 self.dataset['liveAttdc'] = urlJsonData['broad']['current_sum_viewer']
 
             else :
-                self.dataset['_id'] = self.channelID
+                self.dataset['_uniq'] = self.platform + self.channelID
 
                 self.dataset['channel'] = self.channel
                 self.dataset['platform'] = self.platform
