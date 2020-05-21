@@ -55,7 +55,7 @@ class LiveCrawling():
         # update
         except pymongo.errors.DuplicateKeyError:
             post_id = collection.update_one({'_uniq': self.platform + self.channelID}, {"$set": self.dataset})
-        print(self.platform, self.channel, 'Done', self.dataset['updateDate'])
+        # print(self.platform, self.channel, 'Done', self.dataset['updateDate'])
 
     def crawling(self, target):
         target = {k:v for k,v in target}
@@ -121,7 +121,6 @@ class LiveCrawling():
             self.dataset['onLive'] = False
             self.dataset['updateDate'] = datetime.now().ctime()
             
-
         self.close_webdriver(driver)
 
     def youtube(self):
