@@ -210,7 +210,7 @@ class LiveCrawling():
 
                 self.dataset['channel'] = self.channel
                 self.dataset['platform'] = self.platform
-                self.dataset['channelID'] = self.channel
+                self.dataset['channelID'] = self.channelID
                 self.dataset['creatorDataHref'] = "http://bj.afreecatv.com/" + self.channelID
                 self.dataset['creatorDataName'] = urlJsonData['station']['user_nick']
 
@@ -226,7 +226,7 @@ class LiveCrawling():
 
                 self.dataset['channel'] = self.channel
                 self.dataset['platform'] = self.platform
-                self.dataset['channelID'] = self.channel
+                self.dataset['channelID'] = self.channelID
 
                 self.dataset['onLive'] = False
                 self.dataset['updateDate'] = datetime.now().ctime()
