@@ -39,22 +39,10 @@ class LiveCrawling():
     # process별로 개별 생성해야한다.
     def init_webdriver(self):
         driver = webdriver.Chrome('driver/chromedriver', options=self.options)
-        return driver
-
-    def close_webdriver(self, driver):
-        driver.quit()
 
     def mongo_insert(self):
         db = self.conn['meerkatonair']
         collection = db['live_list']
-
-        # insert
-        # try:
-        #     if self.dataset != {}:
-        #         post_id = collection.insert_one(self.dataset)
-        # # update
-        # except pymongo.errors.DuplicateKeyError:
-        #     post_id = collection.update_one({'_uniq': self.platform + self.channelID}, {"$set": self.dataset})
 
         if self.dataset != {}:
             post_id = collection.update_one({'_uniq': self.platform + self.channelID}, {"$set": self.dataset}, upsert=True)
@@ -74,9 +62,9 @@ class LiveCrawling():
                 self.twitch()
             elif self.platform == 'afreecatv':
                 self.afreecatv()
-            elif self.platform == 'vlive':        
-                pass        
+            elif self.platform == 'vlive':              
                 #self.vlive()
+                pass
             else:
                 print(self.platform, self.channelID, "Platform undefined")
 
@@ -124,7 +112,7 @@ class LiveCrawling():
             self.dataset['onLive'] = False
             self.dataset['updateDate'] = datetime.now().ctime()
             
-        self.close_webdriver(driver)
+        driver.close()
 
     def youtube(self):
 
