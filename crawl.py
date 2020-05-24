@@ -93,6 +93,7 @@ class LiveCrawling():
 
             self.dataset['creatorDataHref'] = url
             self.dataset['creatorDataName'] = soup.select_one('.channel_info_area .name').text
+            self.dataset['creatorDataLogo'] = soup.selct_one('img_thumb ng-star-inserted')['src']
 
             self.dataset['onLive'] = True
             self.dataset['updateDate'] = datetime.now().ctime()
@@ -137,6 +138,7 @@ class LiveCrawling():
                 self.dataset['platform'] = self.platform
                 self.dataset['creatorDataHref'] = url + creatorData.attrs['href']
                 self.dataset['creatorDataName'] = creatorData.text
+                self.dataset['creatorDataLogo'] = soup.select_one('.channel-header-profile-image')['src']
 
                 self.dataset['onLive'] = True
                 self.dataset['updateDate'] = datetime.now().ctime()
@@ -163,6 +165,7 @@ class LiveCrawling():
 
         url, headers = platform_headers(self.platform, self.channelID, auth = self.auth)
         urldata = requests.get(url + self.channelID, headers=headers)
+        creatorDataLogo = requests.get('https://api.twitch.tv/helix/users?login=' + self.channelID, headers=headers).json()
 
         if urldata.status_code == 200:
             urlJsonData = json.loads(urldata.text)
@@ -175,6 +178,7 @@ class LiveCrawling():
                 self.dataset['platform'] = self.platform
                 self.dataset['creatorDataHref'] = "http://twitch.tv/" + self.channelID
                 self.dataset['creatorDataName'] = urlJsonData['data'][0]['user_name']
+                self.dataset['creatorDataLogo'] = creatorDataLogo['data'][0]['profile_image_url']
 
                 self.dataset['onLive'] = True
                 self.dataset['updateDate'] = datetime.now().ctime()
@@ -213,6 +217,7 @@ class LiveCrawling():
                 self.dataset['channelID'] = self.channelID
                 self.dataset['creatorDataHref'] = "http://bj.afreecatv.com/" + self.channelID
                 self.dataset['creatorDataName'] = urlJsonData['station']['user_nick']
+                self.dataset['creatorDataLogo'] = "http://stimg.afreecatv.com/LOGO/" + self.channelID[:2] + "/"+ self.channelID + "/"+ self.channelID + ".jpg"
 
                 self.dataset['onLive'] = True
                 self.dataset['updateDate'] = datetime.now().ctime()

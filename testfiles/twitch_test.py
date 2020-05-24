@@ -18,7 +18,10 @@ auth = {
 url, headers = platform_headers(platform, channelID, auth = auth)
 # urldata = requests.get(url + channelID, headers=headers)
 
+if __name__ == "__main__":
 
-res = requests.get('https://api.twitch.tv/helix/games?id='+str(509538) , headers=headers).json()['data'][0]['name']
+    #res = requests.get('https://api.twitch.tv/helix/games?id='+str(509538) , headers=headers).json()['data'][0]['name']
+    res = requests.get('https://api.twitch.tv/helix/users?login=woowakgood', headers=headers)
 
-print(res)
+
+    print(res.text)
