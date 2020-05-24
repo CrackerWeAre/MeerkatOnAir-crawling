@@ -57,7 +57,7 @@ def parse_category(platform, id, headers=None):
             detail = ''
         else:
             category = 'Game'
-            detail = requests.get('https://api.twitch.tv/helix/games?id='+str(509538) , headers=headers).json()['data'][0]['name']
+            detail = requests.get('https://api.twitch.tv/helix/games?id='+str(id) , headers=headers).json()['data'][0]['name']
 
     elif platform == 'youtube':
         category = ''
