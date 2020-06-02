@@ -183,7 +183,7 @@ class LiveCrawling():
                 self.dataset['onLive'] = True
                 self.dataset['updateDate'] = datetime.now().ctime()
 
-                self.dataset['imgDataSrc'] = urlJsonData['data'][0]['thumbnail_url'].replace('{width}', '250').replace('{height}', '140')
+                self.dataset['imgDataSrc'] = urlJsonData['data'][0]['thumbnail_url'].replace('{width}', '356').replace('{height}', '200')
                 self.dataset['liveDataHref'] = "http://twitch.tv/" + self.channelID
                 self.dataset['liveDataTitle'] = urlJsonData['data'][0]['title']
                 self.dataset['liveAttdc'] = urlJsonData['data'][0]['viewer_count']
