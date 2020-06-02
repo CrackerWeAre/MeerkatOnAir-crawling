@@ -103,6 +103,8 @@ class LiveCrawling():
             self.dataset['liveDataHref'] = soup.select_one('.onair .article_link')['href']
             self.dataset['liveDataTitle'] = soup.select_one('.onair .article_link .title').text
             self.dataset['liveAttdc'] = int(soup.select_one('.onair .article_link .info.chat').text.replace('chat count','').replace('K','000'))
+        
+            self.dataset['category'], self.dataset['detail'] = parse_category(self.platform)
         else:
             self.dataset['_uniq'] = self.platform + self.channelID
 
@@ -147,6 +149,8 @@ class LiveCrawling():
                 self.dataset['liveDataHref'] = url + liveData.attrs['href']
                 self.dataset['liveDataTitle'] = liveData.attrs['title']
                 self.dataset['liveAttdc'] = int(AttdData.text.partition('명')[0].replace(',',''))
+
+                self.dataset['category'], self.dataset['detail'] = parse_category(self.platform)
             else :
                 creatorData = link[0].select_one('div.yt-lockup-content > div.yt-lockup-byline > a')
 
@@ -226,6 +230,7 @@ class LiveCrawling():
                 self.dataset['liveDataTitle'] = urlJsonData['broad']['broad_title']
                 self.dataset['liveAttdc'] = urlJsonData['broad']['current_sum_viewer']
 
+                self.dataset['category'], self.dataset['detail'] = parse_category(self.platform)
             else :
                 self.dataset['_uniq'] = self.platform + self.channelID
 
