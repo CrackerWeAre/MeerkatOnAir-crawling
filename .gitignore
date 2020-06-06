@@ -4,7 +4,6 @@
 
 driver/
 *.log
-*.json
 
 ### Python ###
 # Byte-compiled / optimized / DLL files
