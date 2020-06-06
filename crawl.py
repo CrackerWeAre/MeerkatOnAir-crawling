@@ -151,7 +151,7 @@ class LiveCrawling():
                 self.dataset['liveDataTitle'] = liveData.attrs['title']
                 self.dataset['liveAttdc'] = int(AttdData.text.partition('명')[0].replace(',',''))
 
-                self.dataset['category'], self.dataset['detail'] = parse_category(self.platform)
+                self.dataset['category'], self.dataset['detail'] = parse_category(self.platform, self.channelID)
             else :
                 creatorData = link[0].select_one('div.yt-lockup-content > div.yt-lockup-byline > a')
 
@@ -231,7 +231,7 @@ class LiveCrawling():
                 self.dataset['liveDataTitle'] = urlJsonData['broad']['broad_title']
                 self.dataset['liveAttdc'] = urlJsonData['broad']['current_sum_viewer']
 
-                self.dataset['category'], self.dataset['detail'] = parse_category(self.platform)
+                self.dataset['category'], self.dataset['detail'] = parse_category(self.platform, self.channelID)
             else :
                 self.dataset['_uniq'] = self.platform + self.channelID
 

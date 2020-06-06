@@ -1,4 +1,5 @@
 import requests
+import json 
 
 def replace_ascii(string):
     string = string.replace('%22','"')
@@ -40,10 +41,15 @@ def platform_headers(platform, channelID, auth = None):
     return url, headers
 
 def parse_category(platform, id=None, headers=None):
+    with open('data/id2cat.json') as f:
+        id2cat = json.load(f)
 
     if platform == 'afreecatv':
-        category = 'COOKING'
-        detail = ''
+        try:
+            category = id2cat[id]['category']
+            detail = id2cat[id]['category-detail']
+        except KeyError:
+            category, detail = '', ''
     
     elif platform == 'twitch':
         if id == 26936:
@@ -51,18 +57,26 @@ def parse_category(platform, id=None, headers=None):
             detail = ''
         elif id == 509667:
             category = 'CHATTING'
-            detail = ''
-        elif id == 509667:
+            detail = 'Food & Drink'
+        elif id == 509658:
             category = 'CHATTING'
             detail = ''
+        elif id == 517249:
+            category = 'SPORTS & EXERCISE'
+            detail = 'SPORTS'
+        elif id == 509671:
+            category = 'SPORTS & EXERCISE'
+            detail = 'EXERCISE'
         else:
             category = 'GAME'
             detail = requests.get('https://api.twitch.tv/helix/games?id='+str(id) , headers=headers).json()['data'][0]['name']
 
     elif platform == 'youtube':
-        category = 'SHOPPING'
-        detail = ''
-
+        try:
+            category = id2cat[id]['category']
+            detail = id2cat[id]['category-detail']
+        except KeyError:
+            category, detail = '', ''
     elif platform == 'vlive':
         category = 'CHATTING'
         detail = ''

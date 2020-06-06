@@ -20,8 +20,11 @@ url, headers = platform_headers(platform, channelID, auth = auth)
 
 if __name__ == "__main__":
 
-    #res = requests.get('https://api.twitch.tv/helix/games?id='+str(509538) , headers=headers).json()['data'][0]['name']
-    res = requests.get('https://api.twitch.tv/helix/users?login=woowakgood', headers=headers)
+    res = requests.get('https://api.twitch.tv/helix/games?id='+str(509671) , headers=headers).json()
+    print(res)
+    
+    #res = requests.get('https://api.twitch.tv/helix/users?login=yagubu', headers=headers)
 
-
-    print(res.text)
+    # res = requests.get('http://api.twitch.tv/helix/streams?user_login=hochschulsport_goettingen', headers=headers)
+    # print(res.json())
+    
