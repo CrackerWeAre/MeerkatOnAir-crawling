@@ -52,19 +52,20 @@ def parse_category(platform, id=None, headers=None):
             category, detail = '', ''
     
     elif platform == 'twitch':
-        if id == 26936:
+        
+        if id == '26936':
             category = 'MUSIC'
             detail = ''
-        elif id == 509667:
+        elif id == '509667':
             category = 'CHATTING'
             detail = 'Food & Drink'
-        elif id == 509658:
+        elif id == '509658':
             category = 'CHATTING'
             detail = ''
-        elif id == 517249:
+        elif id == '517249':
             category = 'SPORTS & EXERCISE'
             detail = 'SPORTS'
-        elif id == 509671:
+        elif id == '509671':
             category = 'SPORTS & EXERCISE'
             detail = 'EXERCISE'
         else:
