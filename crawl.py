@@ -56,6 +56,7 @@ class LiveCrawling():
             self.channelID = target['channelID']
             self.channel = target['channel']
 
+            print(self.platform, self.channel, 'crawling ...')
             if self.platform == 'youtube':
                 self.youtube()
             elif self.platform == 'twitch':
