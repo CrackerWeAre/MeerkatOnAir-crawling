@@ -18,3 +18,4 @@ typed-ast==1.4.1
 urllib3==1.25.9
 wrapt==1.12.1
 selenium==3.141.0
+pathos==0.2.5
