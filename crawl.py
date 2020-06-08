@@ -8,7 +8,7 @@ from bs4 import BeautifulSoup
 from pymongo import MongoClient 
 from requests_utils import *
 from selenium import webdriver
-from multiprocessing import Pool
+from pathos.multiprocessing import ProcessingPool as Pool #pip install pathos
 
 class LiveCrawling():
 
@@ -37,8 +37,11 @@ class LiveCrawling():
 
     # webdriver는 single-thread 라서 __init__에 있으면 multiprocessing 오류가 뜸.
     # process별로 개별 생성해야한다.
-    def init_webdriver(self):
+    def init_webdriver(self, url):
         driver = webdriver.Chrome('driver/chromedriver', options=self.options)
+        driver.get(url)
+        time.sleep(0.6)
+        return driver
 
     def mongo_insert(self):
         db = self.conn['meerkatonair']
@@ -64,7 +67,7 @@ class LiveCrawling():
             elif self.platform == 'afreecatv':
                 self.afreecatv()
             elif self.platform == 'vlive':              
-                #self.vlive()
+                self.vlive()
                 pass
             else:
                 print(self.platform, self.channelID, "Platform undefined")
@@ -79,9 +82,8 @@ class LiveCrawling():
 
         url, _ = platform_headers(self.platform, self.channelID)
 
-        driver = self.init_webdriver()
-        driver.get(url)
-        time.sleep(0.6)
+        driver = self.init_webdriver(url)
+        
         soup = BeautifulSoup(driver.page_source, 'html.parser')
 
         if not soup.select_one('.onair') == None:
@@ -116,7 +118,7 @@ class LiveCrawling():
             self.dataset['onLive'] = False
             self.dataset['updateDate'] = datetime.now().ctime()
             
-        driver.close()
+        driver.quit()
 
     def youtube(self):
 
@@ -226,7 +228,7 @@ class LiveCrawling():
 
                 self.dataset['onLive'] = True
                 self.dataset['updateDate'] = datetime.now().ctime()
-                self.dataset['imgDataSrc'] = "//liveimg.afreecatv.com/" + str(urlJsonData['broad']['broad_no']) + ".gif"
+                self.dataset['imgDataSrc'] = "//liveimg.afreecatv.com/" + str(urlJsonData['broad']['broad_no']) + "_480x270.gif"
                 self.dataset['liveDataHref'] = "http://play.afreecatv.com/" + self.channelID + "/" + str(urlJsonData['broad']['broad_no'])
                 self.dataset['liveDataTitle'] = urlJsonData['broad']['broad_title']
                 self.dataset['liveAttdc'] = urlJsonData['broad']['current_sum_viewer']
