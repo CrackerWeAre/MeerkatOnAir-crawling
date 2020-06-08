@@ -67,7 +67,7 @@ class LiveCrawling():
             elif self.platform == 'afreecatv':
                 self.afreecatv()
             elif self.platform == 'vlive':              
-                self.vlive()
+                #self.vlive()
                 pass
             else:
                 print(self.platform, self.channelID, "Platform undefined")
