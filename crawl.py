@@ -8,15 +8,16 @@ from bs4 import BeautifulSoup
 from pymongo import MongoClient 
 from requests_utils import *
 from selenium import webdriver
-from pathos.multiprocessing import ProcessingPool as Pool #pip install pathos
+# from pathos.multiprocessing import ProcessingPool as Pool #pip install pathos
+from multiprocessing import Pool
+
 
 class LiveCrawling():
 
-    def __init__(self, debug=False):
+    def __init__(self):
         self.platform = None
         self.channel = None
         self.channelID = None
-        self.debug = debug
         self.dataset = {}
         self.options = webdriver.ChromeOptions()
         self.options.add_argument('--headless')
@@ -24,16 +25,7 @@ class LiveCrawling():
         self.options.add_argument('--no-sandbox')
         self.options.add_argument('--disable-dev-shm-usage')
         self.options.add_argument("user-agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.100 Safari/537.36")
-       
-        with open('mongodb_auth.json', 'r') as f:
-            self.mongo_auth = json.load(f)
-
-        self.conn = MongoClient('mongodb://%s:%s@%s:%s' % (self.mongo_auth['username'], self.mongo_auth['password'], self.mongo_auth['hostname'], self.mongo_auth['port']),
-                    connect=False)
-
-        self.db_admin = self.conn['admin']
-        collection = self.db_admin['authorization']
-        self.auth = collection.find_one()
+        self.auth = self.init_connection()
 
     # webdriver는 single-thread 라서 __init__에 있으면 multiprocessing 오류가 뜸.
     # process별로 개별 생성해야한다.
@@ -43,13 +35,17 @@ class LiveCrawling():
         time.sleep(0.6)
         return driver
 
-    def mongo_insert(self):
-        db = self.conn['meerkatonair']
-        collection = db['live_list']
+    def init_connection(self):
+        with open('mongodb_auth.json', 'r') as f:
+            mongo_auth = json.load(f)
 
-        if self.dataset != {}:
-            post_id = collection.update_one({'_uniq': self.platform + self.channelID}, {"$set": self.dataset}, upsert=True)
-        # print(self.platform, self.channel, 'Done', self.dataset['updateDate'])
+        conn = MongoClient('mongodb://%s:%s@%s:%s' % (mongo_auth['username'], mongo_auth['password'], mongo_auth['hostname'], mongo_auth['port']),
+                    connect=False)
+
+        db_admin = conn['admin']
+        collection = db_admin['authorization']
+        conn.close()
+        return collection.find_one()
 
     def crawling(self, target):
         target = {k:v for k,v in target}
@@ -59,7 +55,6 @@ class LiveCrawling():
             self.channelID = target['channelID']
             self.channel = target['channel']
 
-            print(self.platform, self.channel, 'crawling ...')
             if self.platform == 'youtube':
                 self.youtube()
             elif self.platform == 'twitch':
@@ -70,13 +65,12 @@ class LiveCrawling():
                 #self.vlive()
                 pass
             else:
-                print(self.platform, self.channelID, "Platform undefined")
+                print(self.platform.upper() , self.channelID, "Platform undefined")
 
-            if not self.debug:
-                self.mongo_insert()
+            return self.platform, self.channelID, self.dataset
         
         except Exception as e:
-            print(self.platform, self.channel, 'Error', e)
+            print(self.platform.upper(), self.channel, 'Error', e)
             
     def vlive(self):
 
@@ -246,18 +240,31 @@ class LiveCrawling():
         else:
             print('[{}]'.format(urldata.status_code))
 
-def process(target):
-    crl = LiveCrawling(debug=False)
-    crl.crawling(target=target)
+def multiprocess(target):
+    crl = LiveCrawling()
+    return crl.crawling(target=target)
 
 def crawl_target(mongo_auth):
-    
     conn = MongoClient('mongodb://%s:%s@%s:%s' % (mongo_auth['username'], mongo_auth['password'], mongo_auth['hostname'], mongo_auth['port']),
                 connect=False)
     db = conn['meerkatonair']
     collection = db['live_list']
     conn.close()
     return collection.find()
+
+def mongo_insert(mongo_auth, results):
+    conn = MongoClient('mongodb://%s:%s@%s:%s' % (mongo_auth['username'], mongo_auth['password'], mongo_auth['hostname'], mongo_auth['port']),
+            connect=False)
+    db = conn['meerkatonair']
+    collection = db['live_list']
+
+    for result in results:
+        if result != None:
+            platform, channelID, data = result
+            post_id = collection.update_one({'_uniq': platform + channelID}, {"$set": data}, upsert=True)
+            print(platform, channelID, 'UPDATE')
+
+    conn.close()
 
 if __name__ == '__main__':
 
@@ -267,8 +274,7 @@ if __name__ == '__main__':
     target = crawl_target(mongo_auth)
     pool = Pool(processes=16)
 
-    t = [list(i.items()) for i in list(target)]
-
     s = time.time()    
-    pool.map(process,t)
+    results = pool.map(multiprocess,[list(i.items()) for i in list(target)])
+    mongo_insert(mongo_auth, results)
     print('Total : ', time.time() -s)

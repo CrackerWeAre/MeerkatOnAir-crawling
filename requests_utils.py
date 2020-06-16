@@ -1,6 +1,9 @@
 import requests
 import json 
 
+with open('data/id2cat.json', 'r', encoding='utf-8') as f:
+    id2cat = json.load(f)
+
 def replace_ascii(string):
     string = string.replace('%22','"')
     string = string.replace('%3A',':')
@@ -41,9 +44,6 @@ def platform_headers(platform, channelID, auth = None):
     return url, headers
 
 def parse_category(platform, id=None, headers=None):
-    with open('data/id2cat.json') as f:
-        id2cat = json.load(f)
-
     if platform == 'afreecatv':
         try:
             category = id2cat[id]['category']
@@ -51,8 +51,7 @@ def parse_category(platform, id=None, headers=None):
         except KeyError:
             category, detail = '', ''
     
-    elif platform == 'twitch':
-        
+    elif platform == 'twitch':    
         if id == '26936':
             category = 'MUSIC'
             detail = ''
@@ -70,7 +69,7 @@ def parse_category(platform, id=None, headers=None):
             detail = 'EXERCISE'
         else:
             category = 'GAME'
-            detail = requests.get('https://api.twitch.tv/helix/games?id='+str(id) , headers=headers).json()['data'][0]['name']
+            detail = requests.get('https://api.twitch.tv/helix/games?id='+ str(id) , headers=headers).json()['data'][0]['name']
 
     elif platform == 'youtube':
         try:
