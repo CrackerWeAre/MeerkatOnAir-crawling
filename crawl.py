@@ -70,7 +70,7 @@ class LiveCrawling():
             return self.platform, self.channelID, self.dataset
         
         except Exception as e:
-            print(self.platform.upper(), self.channel, 'Error', e)
+            print(self.platform.upper(), self.channelID, 'Error', e)
             
     def vlive(self):
 
@@ -261,8 +261,11 @@ def mongo_insert(mongo_auth, results):
     for result in results:
         if result != None:
             platform, channelID, data = result
-            post_id = collection.update_one({'_uniq': platform + channelID}, {"$set": data}, upsert=True)
-            print(platform, channelID, 'UPDATE')
+            if not data == {}:
+                post_id = collection.update_one({'_uniq': platform + channelID}, {"$set": data}, upsert=True)
+                print(platform, channelID, 'UPDATED')
+            else:
+                print(platform, channelID, 'NOT UPDATED')
 
     conn.close()
 
