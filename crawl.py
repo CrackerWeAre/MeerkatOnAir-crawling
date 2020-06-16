@@ -258,14 +258,20 @@ def mongo_insert(mongo_auth, results):
     db = conn['meerkatonair']
     collection = db['live_list']
 
+
+    success = len(results)
     for result in results:
         if result != None:
             platform, channelID, data = result
             if not data == {}:
                 post_id = collection.update_one({'_uniq': platform + channelID}, {"$set": data}, upsert=True)
-                print(platform, channelID, 'UPDATED')
+                print(platform.upper(), channelID, 'UPDATED')
             else:
-                print(platform, channelID, 'NOT UPDATED')
+                success -= 1
+                print(platform.upper(), channelID, 'NOT UPDATED')
+
+    print("SUCCESS [%d/%d]" %(success, len(results)))
+
 
     conn.close()
 
