@@ -117,40 +117,49 @@ class LiveCrawling():
     def youtube(self):
 
         url, _ = platform_headers(self.platform, self.channelID)
-        urldata = requests.get(url + '/channel/' + self.channelID)
+        urldata = requests.get(url + '/channel/' + self.channelID, timeout=5)
 
         if urldata.status_code == 200:
             soup = BeautifulSoup(urldata.text, 'html.parser')
             link = soup.select('div.yt-lockup-dismissable')
-            linkData =  link[0].select('div.yt-lockup-content')
-            dataLiveConfirm = linkData[0].select_one('a')['data-sessionlink']
 
-            if dataLiveConfirm.find('live') > 0 :
-                liveData = link[0].select_one('div.yt-lockup-content > h3 > a')
-                AttdData = link[0].select_one('div.yt-lockup-content > div.yt-lockup-meta > ul > li ')
-                creatorData = link[0].select_one('div.yt-lockup-content > div.yt-lockup-byline > a')
+            try:
+                linkData =  link[0].select('div.yt-lockup-content')
+                dataLiveConfirm = linkData[0].select_one('a')['data-sessionlink']
 
-                self.dataset['_uniq'] = self.platform + self.channelID
+                if dataLiveConfirm.find('live') > 0 :
+                    liveData = link[0].select_one('div.yt-lockup-content > h3 > a')
+                    AttdData = link[0].select_one('div.yt-lockup-content > div.yt-lockup-meta > ul > li ')
+                    creatorData = link[0].select_one('div.yt-lockup-content > div.yt-lockup-byline > a')
 
-                self.dataset['channel'] = self.channel
-                self.dataset['channelID'] = self.channelID
-                self.dataset['platform'] = self.platform
-                self.dataset['creatorDataHref'] = url + creatorData.attrs['href']
-                self.dataset['creatorDataName'] = creatorData.text
-                self.dataset['creatorDataLogo'] = soup.select_one('.channel-header-profile-image')['src']
+                    self.dataset['_uniq'] = self.platform + self.channelID
 
-                self.dataset['onLive'] = True
-                self.dataset['updateDate'] = datetime.now().ctime()
-                
-                self.dataset['imgDataSrc'] = link[0].select_one('div.yt-lockup-thumbnail > span > a > span > span > span > img').attrs['data-thumb']
-                self.dataset['liveDataHref'] = url + liveData.attrs['href']
-                self.dataset['liveDataTitle'] = liveData.attrs['title']
-                self.dataset['liveAttdc'] = int(AttdData.text.partition('명')[0].replace(',',''))
+                    self.dataset['channel'] = self.channel
+                    self.dataset['channelID'] = self.channelID
+                    self.dataset['platform'] = self.platform
+                    self.dataset['creatorDataHref'] = url + creatorData.attrs['href']
+                    self.dataset['creatorDataName'] = creatorData.text
+                    self.dataset['creatorDataLogo'] = soup.select_one('.channel-header-profile-image')['src']
 
-                self.dataset['category'], self.dataset['detail'] = parse_category(self.platform, self.channelID)
-            else :
-                creatorData = link[0].select_one('div.yt-lockup-content > div.yt-lockup-byline > a')
+                    self.dataset['onLive'] = True
+                    self.dataset['updateDate'] = datetime.now().ctime()
+                    
+                    self.dataset['imgDataSrc'] = link[0].select_one('div.yt-lockup-thumbnail > span > a > span > span > span > img').attrs['data-thumb']
+                    self.dataset['liveDataHref'] = url + liveData.attrs['href']
+                    self.dataset['liveDataTitle'] = liveData.attrs['title']
+                    self.dataset['liveAttdc'] = int(AttdData.text.partition('명')[0].replace(',',''))
 
+                    self.dataset['category'], self.dataset['detail'] = parse_category(self.platform, self.channelID)
+                else :
+                    self.dataset['_uniq'] = self.platform + self.channelID
+
+                    self.dataset['channel'] = self.channel
+                    self.dataset['channelID'] = self.channelID
+                    self.dataset['platform'] = self.platform
+
+                    self.dataset['onLive'] = False
+                    self.dataset['updateDate'] = datetime.now().ctime()
+            except:
                 self.dataset['_uniq'] = self.platform + self.channelID
 
                 self.dataset['channel'] = self.channel
@@ -258,7 +267,6 @@ def mongo_insert(mongo_auth, results):
     db = conn['meerkatonair']
     collection = db['live_list']
 
-
     success = len(results)
     for result in results:
         if result != None:
@@ -271,8 +279,6 @@ def mongo_insert(mongo_auth, results):
                 print(platform.upper(), channelID, 'NOT UPDATED')
 
     print("SUCCESS [%d/%d]" %(success, len(results)))
-
-
     conn.close()
 
 if __name__ == '__main__':
