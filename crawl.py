@@ -255,7 +255,7 @@ def crawl_target(mongo_auth):
     conn = MongoClient('mongodb://%s:%s@%s:%s' % (mongo_auth['username'], mongo_auth['password'], mongo_auth['hostname'], mongo_auth['port']),
                 connect=False)
     db = conn['meerkatonair']
-    collection = db['crawl_target']
+    collection = db['live_list']
     conn.close()
     return collection.find()
 
