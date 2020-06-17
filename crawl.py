@@ -14,25 +14,26 @@ from multiprocessing import Pool
 
 class LiveCrawling():
 
-    def __init__(self):
+    def __init__(self, browser='chrome'):
         self.platform = None
         self.channel = None
         self.channelID = None
         self.dataset = {}
-        self.options = webdriver.ChromeOptions()
-        self.options.add_argument('--headless')
-        self.options.add_argument('--disable-extensions')
-        self.options.add_argument('--no-sandbox')
-        self.options.add_argument('--disable-dev-shm-usage')
-        self.options.add_argument("user-agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.100 Safari/537.36")
         self.auth = self.init_connection()
+
+        if browser == 'chrome':
+            self.options = webdriver.ChromeOptions()
+            self.options.add_argument('--headless')
+            self.options.add_argument('--disable-extensions')
+            self.options.add_argument('--no-sandbox')
+            self.options.add_argument('--disable-dev-shm-usage')
+            self.options.add_argument("user-agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.100 Safari/537.36")
 
     # webdriver는 single-thread 라서 __init__에 있으면 multiprocessing 오류가 뜸.
     # process별로 개별 생성해야한다.
-    def init_webdriver(self, url):
+    def init_webdriver(self):
         driver = webdriver.Chrome('driver/chromedriver', options=self.options)
-        driver.get(url)
-        time.sleep(0.6)
+        #driver = webdriver.Chrome('driver/chromedriver.exe', options=self.options)
         return driver
 
     def init_connection(self):
@@ -62,8 +63,7 @@ class LiveCrawling():
             elif self.platform == 'afreecatv':
                 self.afreecatv()
             elif self.platform == 'vlive':              
-                #self.vlive()
-                pass
+                self.vlive()
             else:
                 print(self.platform.upper() , self.channelID, "Platform undefined")
 
@@ -73,46 +73,48 @@ class LiveCrawling():
             print(self.platform.upper(), self.channelID, 'Error', e)
             
     def vlive(self):
-
         url, _ = platform_headers(self.platform, self.channelID)
-
-        driver = self.init_webdriver(url)
+        driver = self.init_webdriver()
+        driver.get(url)
+        time.sleep(3)
         
-        soup = BeautifulSoup(driver.page_source, 'html.parser')
+        try:
+            soup = BeautifulSoup(driver.page_source, 'html.parser')
+            if not soup.select_one('.onair') == None:
+                
+                self.dataset['_uniq'] = self.platform + self.channelID
 
-        if not soup.select_one('.onair') == None:
+                self.dataset['channel'] = self.channel
+                self.dataset['channelID'] = self.channelID
+                self.dataset['platform'] = self.platform
+
+                self.dataset['creatorDataHref'] = url
+                self.dataset['creatorDataName'] = soup.select_one('.channel_info_area .name').text
+                self.dataset['creatorDataLogo'] = soup.selct_one('img_thumb ng-star-inserted')['src']
+
+                self.dataset['onLive'] = True
+                self.dataset['updateDate'] = datetime.now().ctime()
+
+                src = soup.select_one('.onair .article_link .article_img img')['src']
+                self.dataset['imgDataSrc'] = replace_ascii(src).split('src="')[-1].split('"&')[0]
+                self.dataset['liveDataHref'] = soup.select_one('.onair .article_link')['href']
+                self.dataset['liveDataTitle'] = soup.select_one('.onair .article_link .title').text
+                self.dataset['liveAttdc'] = int(soup.select_one('.onair .article_link .info.chat').text.replace('chat count','').replace('K','000'))
             
-            self.dataset['_uniq'] = self.platform + self.channelID
+                self.dataset['category'], self.dataset['detail'] = parse_category(self.platform)
+            else:
+                self.dataset['_uniq'] = self.platform + self.channelID
 
-            self.dataset['channel'] = self.channel
-            self.dataset['channelID'] = self.channelID
-            self.dataset['platform'] = self.platform
+                self.dataset['channel'] = self.channel
+                self.dataset['platform'] = self.platform
+                self.dataset['channelID'] = self.channelID
 
-            self.dataset['creatorDataHref'] = url
-            self.dataset['creatorDataName'] = soup.select_one('.channel_info_area .name').text
-            self.dataset['creatorDataLogo'] = soup.selct_one('img_thumb ng-star-inserted')['src']
-
-            self.dataset['onLive'] = True
-            self.dataset['updateDate'] = datetime.now().ctime()
-
-            src = soup.select_one('.onair .article_link .article_img img')['src']
-            self.dataset['imgDataSrc'] = replace_ascii(src).split('src="')[-1].split('"&')[0]
-            self.dataset['liveDataHref'] = soup.select_one('.onair .article_link')['href']
-            self.dataset['liveDataTitle'] = soup.select_one('.onair .article_link .title').text
-            self.dataset['liveAttdc'] = int(soup.select_one('.onair .article_link .info.chat').text.replace('chat count','').replace('K','000'))
-        
-            self.dataset['category'], self.dataset['detail'] = parse_category(self.platform)
-        else:
-            self.dataset['_uniq'] = self.platform + self.channelID
-
-            self.dataset['channel'] = self.channel
-            self.dataset['platform'] = self.platform
-            self.dataset['channelID'] = self.channelID
-
-            self.dataset['onLive'] = False
-            self.dataset['updateDate'] = datetime.now().ctime()
-            
-        driver.quit()
+                self.dataset['onLive'] = False
+                self.dataset['updateDate'] = datetime.now().ctime()
+                
+            driver.quit()
+        except:
+            driver.quit()
 
     def youtube(self):
 
@@ -291,5 +293,5 @@ if __name__ == '__main__':
 
     s = time.time()    
     results = pool.map(multiprocess,[list(i.items()) for i in list(target)])
-    mongo_insert(mongo_auth, results)
+    # mongo_insert(mongo_auth, results)
     print('Total : ', time.time() -s)
