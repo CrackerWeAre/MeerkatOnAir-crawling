@@ -33,8 +33,8 @@ class LiveCrawling():
     # webdriver는 single-thread 라서 __init__에 있으면 multiprocessing 오류가 뜸.
     # process별로 개별 생성해야한다.
     def init_webdriver(self):
-        #driver = webdriver.Chrome('driver/chromedriver', options=self.options)
-        driver = webdriver.Chrome('driver/chromedriver.exe', options=self.options)
+        driver = webdriver.Chrome('driver/chromedriver', options=self.options)
+        #driver = webdriver.Chrome('driver/chromedriver.exe', options=self.options)
         return driver
 
     def init_connection(self):
