@@ -2,6 +2,7 @@ import requests
 import json
 import time
 import pymongo
+import argparse
 
 from datetime import datetime
 from bs4 import BeautifulSoup
@@ -171,7 +172,7 @@ class LiveCrawling():
                 self.dataset['onLive'] = False
                 self.dataset['updateDate'] = datetime.now().ctime()
         else:
-            print('[{}]'.format(urldata.status_code))
+            print(self.platform, self.channelID, urldata.status_code)
 
     def twitch(self):
 
@@ -211,7 +212,7 @@ class LiveCrawling():
                 self.dataset['onLive'] = False
                 self.dataset['updateDate'] = datetime.now().ctime()
         else:
-            print('[{}]'.format(urldata.status_code))
+            print(self.platform, self.channelID, urldata.status_code)
 
     def afreecatv(self):
         
@@ -249,20 +250,26 @@ class LiveCrawling():
                 self.dataset['onLive'] = False
                 self.dataset['updateDate'] = datetime.now().ctime()
         else:
-            print('[{}]'.format(urldata.status_code))
+            print(self.platform, self.channelID, urldata.status_code)
 
 def multiprocess(target):
     crl = LiveCrawling()
     return crl.crawling(target=target)
 
-def crawl_target(mongo_auth):
+def crawl_target(platform, mongo_auth):
     conn = MongoClient('mongodb://%s:%s@%s:%s' % (mongo_auth['username'], mongo_auth['password'], mongo_auth['hostname'], mongo_auth['port']),
                 connect=False)
     db = conn['meerkatonair']
     collection = db['live_list']
     conn.close()
-    return collection.find()
 
+    if platform == 0:
+        return collection.find({"platform": {"$in" : ["twitch","youtube","afreecatv"]}})
+    elif platform == 1:
+        return collection.find({"platform": "vlive"})
+    else:
+        return False
+ 
 def mongo_insert(mongo_auth, results):
     conn = MongoClient('mongodb://%s:%s@%s:%s' % (mongo_auth['username'], mongo_auth['password'], mongo_auth['hostname'], mongo_auth['port']),
             connect=False)
@@ -285,13 +292,18 @@ def mongo_insert(mongo_auth, results):
 
 if __name__ == '__main__':
 
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--platform', required=False, type=int, default=0, help="Define target platform [0: requests, 1: selenium]")
+    parser.add_argument('--process', required=False, type=int, default=16, help="Define multiprocess worker")
+    args = parser.parse_args()
+
     with open('mongodb_auth.json', 'r') as f:
         mongo_auth = json.load(f)
     
-    target = crawl_target(mongo_auth)
-    pool = Pool(processes=16)
+    target = crawl_target(args.platform, mongo_auth)
+    pool = Pool(processes=args.process)
 
     s = time.time()    
     results = pool.map(multiprocess,[list(i.items()) for i in list(target)])
-    # mongo_insert(mongo_auth, results)
+    mongo_insert(mongo_auth, results)
     print('Total : ', time.time() -s)
