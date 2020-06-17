@@ -33,8 +33,8 @@ class LiveCrawling():
     # webdriver는 single-thread 라서 __init__에 있으면 multiprocessing 오류가 뜸.
     # process별로 개별 생성해야한다.
     def init_webdriver(self):
-        driver = webdriver.Chrome('driver/chromedriver', options=self.options)
-        #driver = webdriver.Chrome('driver/chromedriver.exe', options=self.options)
+        #driver = webdriver.Chrome('driver/chromedriver', options=self.options)
+        driver = webdriver.Chrome('driver/chromedriver.exe', options=self.options)
         return driver
 
     def init_connection(self):
@@ -91,7 +91,7 @@ class LiveCrawling():
 
                 self.dataset['creatorDataHref'] = url
                 self.dataset['creatorDataName'] = soup.select_one('.channel_info_area .name').text
-                self.dataset['creatorDataLogo'] = soup.selct_one('img_thumb ng-star-inserted')['src']
+                self.dataset['creatorDataLogo'] = soup.select_one('.img_thumb.ng-star-inserted')['src']
 
                 self.dataset['onLive'] = True
                 self.dataset['updateDate'] = datetime.now().ctime()
@@ -100,8 +100,7 @@ class LiveCrawling():
                 self.dataset['imgDataSrc'] = replace_ascii(src).split('src="')[-1].split('"&')[0]
                 self.dataset['liveDataHref'] = soup.select_one('.onair .article_link')['href']
                 self.dataset['liveDataTitle'] = soup.select_one('.onair .article_link .title').text
-                self.dataset['liveAttdc'] = int(soup.select_one('.onair .article_link .info.chat').text.replace('chat count','').replace('K','000'))
-            
+                self.dataset['liveAttdc'] = int(soup.select_one('.onair .article_link .info.chat').text.replace('chat count','').replace('K','000').replace('만','000').replace('.','').replace(',',''))
                 self.dataset['category'], self.dataset['detail'] = parse_category(self.platform)
             else:
                 self.dataset['_uniq'] = self.platform + self.channelID
@@ -114,7 +113,8 @@ class LiveCrawling():
                 self.dataset['updateDate'] = datetime.now().ctime()
                 
             driver.quit()
-        except:
+        except Exception as e:
+            print(self.platform, self.channelID, e)
             driver.quit()
 
     def youtube(self):
