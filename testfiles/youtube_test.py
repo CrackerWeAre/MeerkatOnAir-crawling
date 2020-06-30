@@ -1,52 +1,87 @@
-import requests
-from bs4 import BeautifulSoup
+#!/usr/bin/python
+
+from apiclient.discovery import build
+from apiclient.errors import HttpError
+from oauth2client.tools import argparser
+
+import json
+import urllib
 import urllib.request
 
-channelID = 'UCR9gReM5VhQ_8brqQrBaVCA'
-headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.122 Safari/537.36"
-        }
+DEVELOPER_KEY = "AIzaSyATi0yW-mcW9vCxMwg0fqOmbkANkKODm3Q"
+YOUTUBE_API_SERVICE_NAME = "youtube"
+YOUTUBE_API_VERSION = "v3"
+FREEBASE_SEARCH_URL = "https://www.googleapis.com/freebase/v1/search?%s"
 
-url = 'https://www.youtube.com'
+def get_topic_id(options):
+  # Retrieve a list of Freebase topics associated with the provided query term.
+  freebase_params = dict(query=options.query, key=DEVELOPER_KEY)
+  freebase_url = "https://www.googleapis.com/freebase/v1/search?%s" % urllib.parse.urlencode(freebase_params)
+  freebase_response = json.loads(urllib.request.urlopen(freebase_url).read())
 
-print(urllib.request.urlopen(url + '/channel/' + channelID).read())
+  if len(freebase_response["result"]) == 0:
+    exit("No matching terms were found in Freebase.")
 
-# urldata = requests.get(url + '/channel/' + channelID, headers=headers)
-# if urldata.status_code == 200:
-#     soup = BeautifulSoup(urldata.text, 'html.parser')
+  # Display the list of matching Freebase topics.
+  mids = []
+  index = 1
+  print("The following topics were found:")
+  for result in freebase_response["result"]:
+    mids.append(result["mid"])
+    print("%2d. %s (%s)" % (index, result.get("name", "Unknown"),
+      result.get("notable", {}).get("name", "Unknown")))
+    index += 1
 
-#     imgDataSrc = soup.select_one('ytd-channel-featured-content-renderer > #contents > ytd-video-renderer > #dismissable > ytd-thumbnail > a > yt-img-shadow > img')
-
-
-    
-
-
-
-    # dataLiveConfirm = linkData[0].select_one('a')['data-sessionlink']
-
-    # if dataLiveConfirm.find('live') > 0 :
-    # liveData = link[0].select_one('div.yt-lockup-content > h3 > a')
-    # AttdData = link[0].select_one('div.yt-lockup-content > div.yt-lockup-meta > ul > li ')
-    # creatorData = link[0].select_one('div.yt-lockup-content > div.yt-lockup-byline > a')
-
-    # self.dataset['_uniq'] = self.platform + self.channelID
-
-    # self.dataset['channel'] = self.channel
-    # self.dataset['channelID'] = self.channelID
-    # self.dataset['platform'] = self.platform
-    # self.dataset['creatorDataHref'] = url + creatorData.attrs['href']
-    # self.dataset['creatorDataName'] = creatorData.text
-    # self.dataset['creatorDataLogo'] = soup.select_one('.channel-header-profile-image')['src']
-
-    # self.dataset['onLive'] = True
-    # self.dataset['updateDate'] = datetime.now().ctime()
-    
-    # self.dataset['imgDataSrc'] = link[0].select_one('div.yt-lockup-thumbnail > span > a > span > span > span > img').attrs['data-thumb']
-    # self.dataset['liveDataHref'] = url + liveData.attrs['href']
-    # self.dataset['liveDataTitle'] = liveData.attrs['title']
-    # self.dataset['liveAttdc'] = int(AttdData.text.partition('명')[0].replace(',',''))
-
-    # self.dataset['category'], self.dataset['detail'] = parse_category(self.platform, self.channelID)
+  # Display a prompt for the user to select a topic and return the topic ID
+  # of the selected topic.
+  mid = None
+  while mid is None:
+    index = input("Enter a topic number to find related YouTube %ss: " %
+      options.type)
+    try:
+      mid = mids[int(index) - 1]
+    except ValueError:
+      pass
+  return mid
 
 
+def youtube_search(mid, options):
+  youtube = build(YOUTUBE_API_SERVICE_NAME, YOUTUBE_API_VERSION,
+  developerKey=DEVELOPER_KEY)
 
+  # Call the search.list method to retrieve results associated with the
+  # specified Freebase topic.
+  search_response = youtube.search().list(
+    topicId=mid,
+    type=options.type,
+    part="id,snippet",
+    maxResults=options.max_results
+  ).execute()
+
+  # Print the title and ID of each matching resource.
+  for search_result in search_response.get("items", []):
+    if search_result["id"]["kind"] == "youtube#video":
+      print("%s (%s)" % (search_result["snippet"]["title"],
+        search_result["id"]["videoId"]))
+    elif search_result["id"]["kind"] == "youtube#channel":
+      print("%s (%s)" % (search_result["snippet"]["title"],
+        search_result["id"]["channelId"]))
+    elif search_result["id"]["kind"] == "youtube#playlist":
+      print("%s (%s)" % (search_result["snippet"]["title"],
+        search_result["id"]["playlistId"]))
+
+
+if __name__ == "__main__":
+  argparser.add_argument("--query", help="Freebase search term", default="Google")
+  argparser.add_argument("--max-results", help="Max YouTube results",
+    default=25)
+  argparser.add_argument("--type",
+    help="YouTube result type: video, playlist, or channel", default="channel")
+  args = argparser.parse_args()
+
+  mid = get_topic_id(args)
+  print(mid)
+  try:
+    youtube_search(mid, args)
+  except HttpError as e:
+    print("An HTTP error %d occurred:\n%s" % (e.resp.status, e.content))

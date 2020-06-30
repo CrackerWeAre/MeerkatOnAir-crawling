@@ -12,7 +12,7 @@ def replace_ascii(string):
     string = string.replace('%3D','=')
     return string
 
-def platform_headers(platform, channelID, auth = None):
+def platform_headers(platform, channelID=None, auth = None):
     
     if platform == 'afreecatv':
         url = "http://bjapi.afreecatv.com/api/" + channelID + "/station/"

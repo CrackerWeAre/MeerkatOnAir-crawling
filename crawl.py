@@ -173,7 +173,7 @@ class LiveCrawling():
                 self.dataset['updateDate'] = datetime.now().ctime()
         else:
             print(self.platform, self.channelID, urldata.status_code)
-
+    
     def twitch(self):
 
         url, headers = platform_headers(self.platform, self.channelID, auth = self.auth)

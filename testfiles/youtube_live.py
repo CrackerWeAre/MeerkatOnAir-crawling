@@ -1,17 +1,36 @@
 import requests
-from bs4 import BeautifulSoup
 
-url = 'http://www.youtube.com' + '/watch?v=CfX5IWY-rE0'
 
-IDs = ['https://www.youtube.com/watch?v=Dx5qFachd3A','https://www.youtube.com/watch?v=maGlNetcuPM','https://www.youtube.com/watch?v=ifVFayN6N0k',
-        'https://www.youtube.com/watch?v=U_sYIKWhJvk','https://www.youtube.com/watch?v=VN0WDA8sh4s','https://www.youtube.com/watch?v=e6iGJIYUroo']
+DEVELOPER_KEY = "AIzaSyATi0yW-mcW9vCxMwg0fqOmbkANkKODm3Q"
+YOUTUBE_API_SERVICE_NAME = "youtube"
+YOUTUBE_API_VERSION = "v3"
 
-for url in IDs:
 
-    res = requests.get(url)
+def getChannel(channelID, youtubeAuth):
+    url = "https://www.googleapis.com/youtube/v3/channels"
+    return requests.get(url, params={
+        'part':'snippet',
+        'id': channelID,
+        'key': youtubeAuth['APIKEY']})
 
-    soup = BeautifulSoup(res.text, 'html.parser')
-    try:
-        print(soup.select('.yt-uix-sessionlink.spf-link')[3])
-    except:
-        pass
+def getLiveStreams(channelID, youtubeAuth):
+    url = "https://www.googleapis.com/youtube/v3/search?"
+    return requests.get(url, params={
+    'part': 'snippet',
+    'eventType': 'live',
+    'type': 'video',
+    # 'channelId': channelID,
+    'key': youtubeAuth['APIKEY']})
+
+# channel = getChannel(channelID="UCsOW9TPy2TKkqCchUHL04Fg", youtubeAuth=youtubeAuth).json()['items'][0]['snippet']
+
+
+# channelTitle = channel['title']
+# channelDescription = channel['description']
+# channelPublishedAt = channel['publishedAt']
+# channelThumbnails = channel['thumbnails']
+# channelCountry = channel['country']
+
+print(getLiveStreams(channelID="UCsOW9TPy2TKkqCchUHL04Fg", youtubeAuth=youtubeAuth).text)
+
+
