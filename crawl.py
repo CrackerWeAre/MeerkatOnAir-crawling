@@ -162,7 +162,8 @@ class LiveCrawling():
 
                     self.dataset['onLive'] = False
                     self.dataset['updateDate'] = datetime.now().ctime()
-            except:
+            except Exception as e:
+                print(self.platform, self.channelID, e)
                 self.dataset['_uniq'] = self.platform + self.channelID
 
                 self.dataset['channel'] = self.channel

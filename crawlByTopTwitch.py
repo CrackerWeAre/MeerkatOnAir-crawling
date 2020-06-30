@@ -55,7 +55,7 @@ def getTarget():
     crl = GetListByTop()
     return crl.twitchByTop()
 
-def insertTargetToMongo(mongo_auth, results):
+def insertTargetToMongo(mongo_auth, channelIDs):
     conn = MongoClient('mongodb://%s:%s@%s:%s' % (mongo_auth['username'], mongo_auth['password'], mongo_auth['hostname'], mongo_auth['port']),
                        connect=False)
     db = conn['meerkatonair']
