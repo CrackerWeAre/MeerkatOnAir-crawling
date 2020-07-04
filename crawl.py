@@ -192,6 +192,7 @@ class LiveCrawling():
                 self.dataset['platform'] = self.platform
                 self.dataset['creatorDataHref'] = "http://twitch.tv/" + self.channelID
                 self.dataset['creatorDataName'] = urlJsonData['data'][0]['user_name']
+                self.dataset['language'] = urlJsonData['data'][0]['language']
                 self.dataset['creatorDataLogo'] = creatorDataLogo['data'][0]['profile_image_url']
 
                 self.dataset['onLive'] = True
@@ -232,7 +233,8 @@ class LiveCrawling():
                 self.dataset['creatorDataHref'] = "http://bj.afreecatv.com/" + self.channelID
                 self.dataset['creatorDataName'] = urlJsonData['station']['user_nick']
                 self.dataset['creatorDataLogo'] = "http://stimg.afreecatv.com/LOGO/" + self.channelID[:2] + "/"+ self.channelID + "/"+ self.channelID + ".jpg"
-
+                self.dataset['language'] = 'kr'
+                
                 self.dataset['onLive'] = True
                 self.dataset['updateDate'] = datetime.now().ctime()
                 self.dataset['imgDataSrc'] = "//liveimg.afreecatv.com/" + str(urlJsonData['broad']['broad_no']) + "_480x270.gif"
