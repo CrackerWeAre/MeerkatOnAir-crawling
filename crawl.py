@@ -1,6 +1,7 @@
 import requests
 import json
 import time
+import re
 import pymongo
 import argparse
 
@@ -57,6 +58,13 @@ class LiveCrawling():
             self.channelID = target['channelID']
             self.channel = target['channel']
 
+            self.dataset['_uniq'] = self.platform + self.channelID
+            self.dataset['channel'] = self.channel
+            self.dataset['channelID'] = self.channelID
+            self.dataset['platform'] = self.platform
+            self.dataset['onLive'] = False
+            self.dataset['updateDate'] = datetime.now().ctime()
+
             if self.platform == 'youtube':
                 self.youtube()
             elif self.platform == 'twitch':
@@ -84,33 +92,20 @@ class LiveCrawling():
             if not soup.select_one('.onair') == None:
                 
                 self.dataset['_uniq'] = self.platform + self.channelID
-
                 self.dataset['channel'] = self.channel
                 self.dataset['channelID'] = self.channelID
                 self.dataset['platform'] = self.platform
-
                 self.dataset['creatorDataHref'] = url
                 self.dataset['creatorDataName'] = soup.select_one('.channel_info_area .name').text
                 self.dataset['creatorDataLogo'] = soup.select_one('.img_thumb.ng-star-inserted')['src']
-
                 self.dataset['onLive'] = True
                 self.dataset['updateDate'] = datetime.now().ctime()
-
                 src = soup.select_one('.onair .article_link .article_img img')['src']
                 self.dataset['imgDataSrc'] = replace_ascii(src).split('src="')[-1].split('"&')[0]
                 self.dataset['liveDataHref'] = soup.select_one('.onair .article_link')['href']
                 self.dataset['liveDataTitle'] = soup.select_one('.onair .article_link .title').text
                 self.dataset['liveAttdc'] = int(soup.select_one('.onair .article_link .info.chat').text.replace('chat count','').replace('K','000').replace('만','000').replace('.','').replace(',',''))
                 self.dataset['category'], self.dataset['detail'] = parse_category(self.platform)
-            else:
-                self.dataset['_uniq'] = self.platform + self.channelID
-
-                self.dataset['channel'] = self.channel
-                self.dataset['platform'] = self.platform
-                self.dataset['channelID'] = self.channelID
-
-                self.dataset['onLive'] = False
-                self.dataset['updateDate'] = datetime.now().ctime()
                 
             driver.quit()
         except Exception as e:
@@ -135,43 +130,55 @@ class LiveCrawling():
                     AttdData = link[0].select_one('div.yt-lockup-content > div.yt-lockup-meta > ul > li ')
                     creatorData = link[0].select_one('div.yt-lockup-content > div.yt-lockup-byline > a')
 
-                    self.dataset['_uniq'] = self.platform + self.channelID
-
-                    self.dataset['channel'] = self.channel
-                    self.dataset['channelID'] = self.channelID
-                    self.dataset['platform'] = self.platform
                     self.dataset['creatorDataHref'] = url + creatorData.attrs['href']
                     self.dataset['creatorDataName'] = creatorData.text
                     self.dataset['creatorDataLogo'] = soup.select_one('.channel-header-profile-image')['src']
-
                     self.dataset['onLive'] = True
-                    self.dataset['updateDate'] = datetime.now().ctime()
-                    
                     self.dataset['imgDataSrc'] = link[0].select_one('div.yt-lockup-thumbnail > span > a > span > span > span > img').attrs['data-thumb']
                     self.dataset['liveDataHref'] = url + liveData.attrs['href']
                     self.dataset['liveDataTitle'] = liveData.attrs['title']
                     self.dataset['liveAttdc'] = int(AttdData.text.partition('명')[0].replace(',',''))
-
                     self.dataset['category'], self.dataset['detail'] = parse_category(self.platform, self.channelID)
-                else :
-                    self.dataset['_uniq'] = self.platform + self.channelID
 
-                    self.dataset['channel'] = self.channel
-                    self.dataset['channelID'] = self.channelID
-                    self.dataset['platform'] = self.platform
+            # parse javascript
+            except IndexError:
+                try:
+                    matched = re.search(r'window\[\"ytInitialData\"\] = (.+?)};', urldata.text, re.S)
+                    json_string = json.loads(matched.group(1)+'}')
 
-                    self.dataset['onLive'] = False
-                    self.dataset['updateDate'] = datetime.now().ctime()
-            except Exception as e:
-                print(self.platform, self.channelID, e)
-                self.dataset['_uniq'] = self.platform + self.channelID
+                    for k, v in json_string.items():
+                        if k == 'header':
+                            obj = v['c4TabbedHeaderRenderer']
+                            self.dataset['creatorDataName'] = obj['title']
+                            self.dataset['creatorDataLogo'] = obj['avatar']['thumbnails'][0]['url']
+                            # TODO : 구독자수가 없는 채널도 있음
+                            # self.dataset['subscriberCount'] = obj['subscriberCountText']['runs'][0]['text']
 
-                self.dataset['channel'] = self.channel
-                self.dataset['channelID'] = self.channelID
-                self.dataset['platform'] = self.platform
+                        elif k == 'metadata':
+                            obj = v['channelMetadataRenderer']
+                            self.dataset['description'] = obj['description']
+                            self.dataset['creatorDataHref'] = obj['channelUrl']
+                            # print(obj['keywords'])
 
-                self.dataset['onLive'] = False
-                self.dataset['updateDate'] = datetime.now().ctime()
+                        elif k == 'contents':
+                            try:
+                                obj = v['twoColumnBrowseResultsRenderer']['tabs'][0]['tabRenderer']['content']['sectionListRenderer']['contents'][
+                                    0]['itemSectionRenderer']['contents'][0]['channelFeaturedContentRenderer']['items'][0]['videoRenderer']
+                    
+                                self.dataset['liveDataHref'] = f"https://www.youtube.com/watch?v={obj['videoId']}"
+                                self.dataset['imgDataSrc'] = obj['thumbnail']['thumbnails'][-1]['url']
+                                self.dataset['liveDataTitle'] = obj['title']['simpleText']
+
+                                self.dataset['liveAttdc'] = int(obj['viewCountText']['runs'][0]['text'].replace('명 시청 중','').replace(',',''))
+                                self.dataset['onLive'] = True
+                                # print(obj['badges'][0]['metadataBadgeRenderer']['style'])
+                                # print(obj['badges'][0]['metadataBadgeRenderer']['label'])
+                                
+                            except KeyError:
+                                pass
+
+                except Exception as e:
+                    print(e)
         else:
             print(self.platform, self.channelID, urldata.status_code)
     
@@ -186,7 +193,6 @@ class LiveCrawling():
             
             if urlJsonData != {'data': [], 'pagination': {}} :
                 self.dataset['_uniq'] = self.platform + self.channelID
-
                 self.dataset['channel'] = self.channel
                 self.dataset['channelID'] = self.channelID
                 self.dataset['platform'] = self.platform
@@ -194,25 +200,13 @@ class LiveCrawling():
                 self.dataset['creatorDataName'] = urlJsonData['data'][0]['user_name']
                 self.dataset['language'] = urlJsonData['data'][0]['language']
                 self.dataset['creatorDataLogo'] = creatorDataLogo['data'][0]['profile_image_url']
-
                 self.dataset['onLive'] = True
                 self.dataset['updateDate'] = datetime.now().ctime()
-
                 self.dataset['imgDataSrc'] = urlJsonData['data'][0]['thumbnail_url'].replace('{width}', '356').replace('{height}', '200')
                 self.dataset['liveDataHref'] = "http://twitch.tv/" + self.channelID
                 self.dataset['liveDataTitle'] = urlJsonData['data'][0]['title']
                 self.dataset['liveAttdc'] = urlJsonData['data'][0]['viewer_count']
-
                 self.dataset['category'], self.dataset['detail'] = parse_category(self.platform, urlJsonData['data'][0]['game_id'], headers=headers)
-            else :
-                self.dataset['_uniq'] = self.platform + self.channelID
-
-                self.dataset['channel'] = self.channel
-                self.dataset['channelID'] = self.channelID
-                self.dataset['platform'] = self.platform
-
-                self.dataset['onLive'] = False
-                self.dataset['updateDate'] = datetime.now().ctime()
         else:
             print(self.platform, self.channelID, urldata.status_code)
 
@@ -243,15 +237,6 @@ class LiveCrawling():
                 self.dataset['liveAttdc'] = urlJsonData['broad']['current_sum_viewer']
 
                 self.dataset['category'], self.dataset['detail'] = parse_category(self.platform, self.channelID)
-            else :
-                self.dataset['_uniq'] = self.platform + self.channelID
-
-                self.dataset['channel'] = self.channel
-                self.dataset['platform'] = self.platform
-                self.dataset['channelID'] = self.channelID
-
-                self.dataset['onLive'] = False
-                self.dataset['updateDate'] = datetime.now().ctime()
         else:
             print(self.platform, self.channelID, urldata.status_code)
 
@@ -308,5 +293,6 @@ if __name__ == '__main__':
 
     s = time.time()    
     results = pool.map(multiprocess,[list(i.items()) for i in list(target)])
+
     mongo_insert(mongo_auth, results)
     print('Total : ', time.time() -s)
