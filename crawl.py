@@ -12,6 +12,7 @@ from requests_utils import *
 from selenium import webdriver
 # from pathos.multiprocessing import ProcessingPool as Pool #pip install pathos
 from multiprocessing import Pool
+from elasticsearch import Elasticsearch, helpers
 
 
 class LiveCrawling():
@@ -64,6 +65,11 @@ class LiveCrawling():
             self.dataset['platform'] = self.platform
             self.dataset['onLive'] = False
             self.dataset['updateDate'] = datetime.now().ctime()
+            # TODO
+            self.dataset['description'] = ''
+            self.dataset['subscriberCount'] = 0
+            self.dataset['category'] = ''
+            self.dataset['detail'] = ''
 
             if self.platform == 'youtube':
                 self.youtube()
@@ -113,7 +119,7 @@ class LiveCrawling():
             driver.quit()
 
     def youtube(self):
-
+ 
         url, _ = platform_headers(self.platform, self.channelID)
         urldata = requests.get(url + '/channel/' + self.channelID, timeout=5)
 
@@ -151,8 +157,10 @@ class LiveCrawling():
                             obj = v['c4TabbedHeaderRenderer']
                             self.dataset['creatorDataName'] = obj['title']
                             self.dataset['creatorDataLogo'] = obj['avatar']['thumbnails'][0]['url']
-                            # TODO : 구독자수가 없는 채널도 있음
-                            # self.dataset['subscriberCount'] = obj['subscriberCountText']['runs'][0]['text']
+                            try:
+                                self.dataset['subscriberCount'] = int(float(obj['subscriberCountText']['runs'][0]['text'][4:-2])*10000)
+                            except:
+                                self.dataset['subscriberCount'] = 0
 
                         elif k == 'metadata':
                             obj = v['channelMetadataRenderer']
@@ -186,7 +194,11 @@ class LiveCrawling():
 
         url, headers = platform_headers(self.platform, self.channelID, auth = self.auth)
         urldata = requests.get(url + self.channelID, headers=headers)
-        creatorDataLogo = requests.get('https://api.twitch.tv/helix/users?login=' + self.channelID, headers=headers).json()
+        userData = requests.get('https://api.twitch.tv/helix/users?login=' + self.channelID, headers=headers).json()
+
+        self.dataset['subscriberCount'] = requests.get("https://api.twitch.tv/helix/users/follows", params={
+            'to_id': userData['data'][0]['id'],
+        }, headers=headers).json()['total']
 
         if urldata.status_code == 200:
             urlJsonData = json.loads(urldata.text)
@@ -199,7 +211,8 @@ class LiveCrawling():
                 self.dataset['creatorDataHref'] = "http://twitch.tv/" + self.channelID
                 self.dataset['creatorDataName'] = urlJsonData['data'][0]['user_name']
                 self.dataset['language'] = urlJsonData['data'][0]['language']
-                self.dataset['creatorDataLogo'] = creatorDataLogo['data'][0]['profile_image_url']
+                self.dataset['creatorDataLogo'] = userData['data'][0]['profile_image_url']
+                self.dataset['description'] = userData['data'][0]['description']
                 self.dataset['onLive'] = True
                 self.dataset['updateDate'] = datetime.now().ctime()
                 self.dataset['imgDataSrc'] = urlJsonData['data'][0]['thumbnail_url'].replace('{width}', '356').replace('{height}', '200')
@@ -211,7 +224,7 @@ class LiveCrawling():
             print(self.platform, self.channelID, urldata.status_code)
 
     def afreecatv(self):
-        
+ 
         url, headers = platform_headers(self.platform, self.channelID)
         urldata = requests.get(url, headers=headers)
 
@@ -227,8 +240,7 @@ class LiveCrawling():
                 self.dataset['creatorDataHref'] = "http://bj.afreecatv.com/" + self.channelID
                 self.dataset['creatorDataName'] = urlJsonData['station']['user_nick']
                 self.dataset['creatorDataLogo'] = "http://stimg.afreecatv.com/LOGO/" + self.channelID[:2] + "/"+ self.channelID + "/"+ self.channelID + ".jpg"
-                self.dataset['language'] = 'kr'
-                
+                self.dataset['language'] = 'kr'               
                 self.dataset['onLive'] = True
                 self.dataset['updateDate'] = datetime.now().ctime()
                 self.dataset['imgDataSrc'] = "//liveimg.afreecatv.com/" + str(urlJsonData['broad']['broad_no']) + "_480x270.gif"
@@ -278,6 +290,33 @@ def mongo_insert(mongo_auth, results):
     print("SUCCESS [%d/%d]" %(success, len(results)))
     conn.close()
 
+def requestElastic(results):
+    es = Elasticsearch('49.247.19.124:9200')
+
+    docs = []
+    for result in results:
+        if result != None:
+            data = result[-1]
+            docs.append({
+                '_index': 'tracking_streamer',
+                '_source': {
+                    "_uniq": f"{data['_uniq']}",
+                    "channel": f"{data['channel']}",
+                    "channelID": f"{data['channelID']}",
+                    "platform": f"{data['platform']}",
+                    "subscriberCount": data['subscriberCount'],
+                    "updateDate": datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + 'Z',
+                    "onLive": data['onLive'],
+                    "liveDataTitle": f"{data['liveDataTitle']}" if data['onLive'] else '',
+                    "liveAttdc": data['liveAttdc'] if data['onLive'] else 0,
+                    "category": f"{data['category']}" if data['onLive'] else '',
+                    "detail": f"{data['detail']}" if data['onLive'] else '',
+                }
+            })
+
+    helpers.bulk(es, docs)
+
+
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
@@ -294,5 +333,6 @@ if __name__ == '__main__':
     s = time.time()    
     results = pool.map(multiprocess,[list(i.items()) for i in list(target)])
 
-    mongo_insert(mongo_auth, results)
+    # mongo_insert(mongo_auth, results)
+    requestElastic(results)
     print('Total : ', time.time() -s)

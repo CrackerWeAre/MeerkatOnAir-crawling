@@ -19,6 +19,14 @@ headers = {
     "Authorization": "Bearer %s" % auth['twitch']['Authorization'] 
     }
 
+def subscription():
+    
+    res = requests.get("https://api.twitch.tv/helix/users/follows", params={
+        'to_id': 36473331,
+    }, headers=headers)
+
+    print(res.json()['total'])
+
 
 def twitchAll():
     max_results = 5
@@ -27,15 +35,17 @@ def twitchAll():
 
     while len(streams) <= max_results:
         responseTwitch = requests.get("https://api.twitch.tv/helix/streams", params={
-            "first": 1,
+            "first": 2,
             "after": pagination,
         }, headers=headers)
 
+        print(responseTwitch)
+
         streams.append(responseTwitch.json()['data'])
-        pagination = responseTwitch.json()['pagination']['cursor']
+        # pagination = responseTwitch.json()['pagination']['cursor']
 
     print(streams)
 
 
 if __name__ == "__main__":
-    twitchAll()
+    subscription()
