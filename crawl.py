@@ -51,25 +51,28 @@ class LiveCrawling():
         conn.close()
         return collection.find_one()
 
+    def initData(self):
+        self.dataset['_uniq'] = self.platform + self.channelID
+        self.dataset['channel'] = self.channel
+        self.dataset['channelID'] = self.channelID
+        self.dataset['platform'] = self.platform
+        self.dataset['onLive'] = False
+        self.dataset['updateDate'] = datetime.now().ctime()
+        # TODO
+        self.dataset['category'] = ''
+        self.dataset['detail'] = ''
+        self.dataset['liveAttdc'] = 0
+        self.dataset['liveDataTitle'] = ''
+
     def crawling(self, target):
         target = {k:v for k,v in target}
         self.dataset = {}
         try:
-            self.platform = target['platform']
+            self.platform = target['platform'].lower()
             self.channelID = target['channelID']
             self.channel = target['channel']
 
-            self.dataset['_uniq'] = self.platform + self.channelID
-            self.dataset['channel'] = self.channel
-            self.dataset['channelID'] = self.channelID
-            self.dataset['platform'] = self.platform
-            self.dataset['onLive'] = False
-            self.dataset['updateDate'] = datetime.now().ctime()
-            # TODO
-            self.dataset['description'] = ''
-            self.dataset['subscriberCount'] = 0
-            self.dataset['category'] = ''
-            self.dataset['detail'] = ''
+            self.initData()
 
             if self.platform == 'youtube':
                 self.youtube()
@@ -95,17 +98,13 @@ class LiveCrawling():
         
         try:
             soup = BeautifulSoup(driver.page_source, 'html.parser')
-            if not soup.select_one('.onair') == None:
-                
-                self.dataset['_uniq'] = self.platform + self.channelID
-                self.dataset['channel'] = self.channel
-                self.dataset['channelID'] = self.channelID
-                self.dataset['platform'] = self.platform
+            if not soup.select_one('.onair') == None:           
+                self.dataset['description'] = ''
+                self.dataset['subscriberCount'] = 0
                 self.dataset['creatorDataHref'] = url
                 self.dataset['creatorDataName'] = soup.select_one('.channel_info_area .name').text
                 self.dataset['creatorDataLogo'] = soup.select_one('.img_thumb.ng-star-inserted')['src']
                 self.dataset['onLive'] = True
-                self.dataset['updateDate'] = datetime.now().ctime()
                 src = soup.select_one('.onair .article_link .article_img img')['src']
                 self.dataset['imgDataSrc'] = replace_ascii(src).split('src="')[-1].split('"&')[0]
                 self.dataset['liveDataHref'] = soup.select_one('.onair .article_link')['href']
@@ -139,6 +138,8 @@ class LiveCrawling():
                     self.dataset['creatorDataHref'] = url + creatorData.attrs['href']
                     self.dataset['creatorDataName'] = creatorData.text
                     self.dataset['creatorDataLogo'] = soup.select_one('.channel-header-profile-image')['src']
+                    self.dataset['description'] = ''
+                    self.dataset['subscriberCount'] = 0
                     self.dataset['onLive'] = True
                     self.dataset['imgDataSrc'] = link[0].select_one('div.yt-lockup-thumbnail > span > a > span > span > span > img').attrs['data-thumb']
                     self.dataset['liveDataHref'] = url + liveData.attrs['href']
@@ -191,36 +192,34 @@ class LiveCrawling():
             print(self.platform, self.channelID, urldata.status_code)
     
     def twitch(self):
-
         url, headers = platform_headers(self.platform, self.channelID, auth = self.auth)
         urldata = requests.get(url + self.channelID, headers=headers)
-        userData = requests.get('https://api.twitch.tv/helix/users?login=' + self.channelID, headers=headers).json()
 
-        self.dataset['subscriberCount'] = requests.get("https://api.twitch.tv/helix/users/follows", params={
-            'to_id': userData['data'][0]['id'],
-        }, headers=headers).json()['total']
+        # TODO : {'error': 'Too Many Requests', 'status': 429, 'message': (You have made too many requests. Please try again later.)'}
+        try:
+            userData = requests.get('https://api.twitch.tv/helix/users?login=' + self.channelID, headers=headers).json()
+            self.dataset['subscriberCount'] = requests.get("https://api.twitch.tv/helix/users/follows", params={
+                'to_id': userData['data'][0]['id'],
+            }, headers=headers).json()['total']
+            self.dataset['creatorDataLogo'] = userData['data'][0]['profile_image_url']
+            self.dataset['description'] = userData['data'][0]['description']
+        except:
+            pass
 
         if urldata.status_code == 200:
             urlJsonData = json.loads(urldata.text)
-            
             if urlJsonData != {'data': [], 'pagination': {}} :
-                self.dataset['_uniq'] = self.platform + self.channelID
-                self.dataset['channel'] = self.channel
-                self.dataset['channelID'] = self.channelID
-                self.dataset['platform'] = self.platform
                 self.dataset['creatorDataHref'] = "http://twitch.tv/" + self.channelID
                 self.dataset['creatorDataName'] = urlJsonData['data'][0]['user_name']
                 self.dataset['language'] = urlJsonData['data'][0]['language']
-                self.dataset['creatorDataLogo'] = userData['data'][0]['profile_image_url']
-                self.dataset['description'] = userData['data'][0]['description']
                 self.dataset['onLive'] = True
-                self.dataset['updateDate'] = datetime.now().ctime()
                 self.dataset['imgDataSrc'] = urlJsonData['data'][0]['thumbnail_url'].replace('{width}', '356').replace('{height}', '200')
                 self.dataset['liveDataHref'] = "http://twitch.tv/" + self.channelID
                 self.dataset['liveDataTitle'] = urlJsonData['data'][0]['title']
                 self.dataset['liveAttdc'] = urlJsonData['data'][0]['viewer_count']
                 self.dataset['category'], self.dataset['detail'] = parse_category(self.platform, urlJsonData['data'][0]['game_id'], headers=headers)
         else:
+            time.sleep(1)
             print(self.platform, self.channelID, urldata.status_code)
 
     def afreecatv(self):
@@ -232,22 +231,17 @@ class LiveCrawling():
             urlJsonData=json.loads(urldata.text)
 
             if urlJsonData['broad']:
-                self.dataset['_uniq'] = self.platform + self.channelID
-
-                self.dataset['channel'] = self.channel
-                self.dataset['platform'] = self.platform
-                self.dataset['channelID'] = self.channelID
                 self.dataset['creatorDataHref'] = "http://bj.afreecatv.com/" + self.channelID
                 self.dataset['creatorDataName'] = urlJsonData['station']['user_nick']
                 self.dataset['creatorDataLogo'] = "http://stimg.afreecatv.com/LOGO/" + self.channelID[:2] + "/"+ self.channelID + "/"+ self.channelID + ".jpg"
                 self.dataset['language'] = 'kr'               
+                self.dataset['description'] = ''
+                self.dataset['subscriberCount'] = 0
                 self.dataset['onLive'] = True
-                self.dataset['updateDate'] = datetime.now().ctime()
                 self.dataset['imgDataSrc'] = "//liveimg.afreecatv.com/" + str(urlJsonData['broad']['broad_no']) + "_480x270.gif"
                 self.dataset['liveDataHref'] = "http://play.afreecatv.com/" + self.channelID + "/" + str(urlJsonData['broad']['broad_no'])
                 self.dataset['liveDataTitle'] = urlJsonData['broad']['broad_title']
                 self.dataset['liveAttdc'] = urlJsonData['broad']['current_sum_viewer']
-
                 self.dataset['category'], self.dataset['detail'] = parse_category(self.platform, self.channelID)
         else:
             print(self.platform, self.channelID, urldata.status_code)
@@ -264,8 +258,13 @@ def crawl_target(platform, mongo_auth):
     conn.close()
 
     if platform == 0:
-        return collection.find({"platform": {"$in" : ["twitch","youtube","afreecatv"]}})
+        # return collection.find({"platform": {"$in" : ["twitch","youtube","afreecatv"]}})
+        return collection.find({"platform": "twitch"})
     elif platform == 1:
+        return collection.find({"platform": "youtube"})
+    elif platform == 2:
+        return collection.find({"platform": "afreecatv"})
+    elif platform == 3:
         return collection.find({"platform": "vlive"})
     else:
         return False
@@ -320,8 +319,8 @@ def requestElastic(results):
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--platform', required=False, type=int, default=0, help="Define target platform [0: requests, 1: selenium]")
-    parser.add_argument('--process', required=False, type=int, default=16, help="Define multiprocess worker")
+    parser.add_argument('--platform', required=False, type=int, default=0, help="Define target platform [0: twitch, 1:youtube, 2:afreeca, 3:vlive]")
+    parser.add_argument('--process', required=False, type=int, default=8, help="Define multiprocess worker")
     args = parser.parse_args()
 
     with open('mongodb_auth.json', 'r') as f:
@@ -333,6 +332,6 @@ if __name__ == '__main__':
     s = time.time()    
     results = pool.map(multiprocess,[list(i.items()) for i in list(target)])
 
-    mongo_insert(mongo_auth, results)
-    requestElastic(results)
+    # mongo_insert(mongo_auth, results)
+    # requestElastic(results)
     print('Total : ', time.time() -s)
