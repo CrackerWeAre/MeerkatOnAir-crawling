@@ -332,6 +332,6 @@ if __name__ == '__main__':
     s = time.time()    
     results = pool.map(multiprocess,[list(i.items()) for i in list(target)])
 
-    # mongo_insert(mongo_auth, results)
-    # requestElastic(results)
+    mongo_insert(mongo_auth, results)
+    requestElastic(results)
     print('Total : ', time.time() -s)
