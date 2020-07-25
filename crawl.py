@@ -104,6 +104,7 @@ class LiveCrawling():
                 self.dataset['creatorDataHref'] = url
                 self.dataset['creatorDataName'] = soup.select_one('.channel_info_area .name').text
                 self.dataset['creatorDataLogo'] = soup.select_one('.img_thumb.ng-star-inserted')['src']
+                self.dataset['language'] = 'kr'
                 self.dataset['onLive'] = True
                 src = soup.select_one('.onair .article_link .article_img img')['src']
                 self.dataset['imgDataSrc'] = replace_ascii(src).split('src="')[-1].split('"&')[0]

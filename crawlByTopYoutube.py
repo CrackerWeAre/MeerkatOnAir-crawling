@@ -21,6 +21,7 @@ class GetListByTop():
       developerKey=self.DEVELOPER_KEY)
     
     channelIDs = []
+    regionCodes = []
     nextPageToken = ""
     while len(channelIDs) <= options.max_results:
       search_response = youtube.search().list(
@@ -34,9 +35,11 @@ class GetListByTop():
 
       nextPageToken = search_response.get("nextPageToken")
 
-      for search_result in search_response.get("items", []):
+      regionCodes.append(search_response.get("regionCode"))
+      for search_result in search_response.get("items"):
         channelIDs += [(search_result["snippet"]["channelId"], search_result['snippet']['channelTitle'])]
 
+    channelIDs = [(*info[0],info[1].lower()) for info in zip(channelIDs, regionCodes)]
     return channelIDs
 
 def getTarget(args):
@@ -53,7 +56,7 @@ def insertTargetToMongo(mongo_auth, channelIDs):
     collection = db['live_list']
     platform = 'youtube'
 
-    for channelID, channel in channelIDs:
+    for channelID, channel, language in channelIDs:
         res = collection.find({"_uniq": platform + channelID})
         if len([r for r in res]) == 0:
             post_id = collection.insert_one(
@@ -61,6 +64,7 @@ def insertTargetToMongo(mongo_auth, channelIDs):
                 "channel": channel,
                 "channelID": channelID,
                 "platform": platform,
+                "language": language,
                 "updateDate": datetime.now().ctime()})
             print(platform.upper(), channelID, 'UPDATED')
 

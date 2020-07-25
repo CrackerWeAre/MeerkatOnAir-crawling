@@ -26,7 +26,7 @@ class GetListByTop():
 
     def twitchByTop(self):
         _, headers = platform_headers(platform='twitch', auth=self.auth)
-        max_results = 200
+        max_results = 500
         first = 50
         user_ids = []
         channelIDs = []
@@ -36,6 +36,8 @@ class GetListByTop():
             responseTwitch = requests.get("https://api.twitch.tv/helix/streams", params={
                 "first": first,
                 "after": pagination,
+                "language": 'ko',
+                # "game_id": 123,
             }, headers=headers)
 
             user_ids += [data['user_id'] for data in responseTwitch.json()['data']]
