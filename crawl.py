@@ -63,6 +63,7 @@ class LiveCrawling():
         self.dataset['detail'] = ''
         self.dataset['liveAttdc'] = 0
         self.dataset['liveDataTitle'] = ''
+        self.dataset['subscriberCount'] = 0
 
     def crawling(self, target):
         target = {k:v for k,v in target}
@@ -291,7 +292,7 @@ def mongo_insert(mongo_auth, results):
     conn.close()
 
 def requestElastic(results):
-    es = Elasticsearch('49.247.19.124:9200')
+    es = Elasticsearch('49.247.19.124:9200',scheme="http")
 
     docs = []
     for result in results:
