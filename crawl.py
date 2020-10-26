@@ -175,21 +175,21 @@ class LiveCrawling():
                             try:
                                 obj = v['twoColumnBrowseResultsRenderer']['tabs'][0]['tabRenderer']['content']['sectionListRenderer']['contents'][
                                     0]['itemSectionRenderer']['contents'][0]['channelFeaturedContentRenderer']['items'][0]['videoRenderer']
-                    
+
                                 self.dataset['liveDataHref'] = f"https://www.youtube.com/watch?v={obj['videoId']}"
                                 self.dataset['imgDataSrc'] = obj['thumbnail']['thumbnails'][-1]['url']
-                                self.dataset['liveDataTitle'] = obj['title']['simpleText']
+                                self.dataset['liveDataTitle'] = obj['title']['runs'][0]['text']
 
                                 self.dataset['liveAttdc'] = int(obj['viewCountText']['runs'][0]['text'].replace('명 시청 중','').replace(',',''))
                                 self.dataset['onLive'] = True
                                 # print(obj['badges'][0]['metadataBadgeRenderer']['style'])
                                 # print(obj['badges'][0]['metadataBadgeRenderer']['label'])
-                                
-                            except KeyError:
+                            # 라이브가 아닐 때,
+                            except KeyError as e:
                                 pass
 
                 except Exception as e:
-                    print(e)
+                    print(self.channelID, e)
         else:
             print(self.platform, self.channelID, urldata.status_code)
     
