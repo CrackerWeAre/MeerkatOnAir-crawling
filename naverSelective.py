@@ -15,18 +15,18 @@ db = conn['meerkatonair']
 collection = db['schedule_list']
 # collection.delete_many({"platform":"naverselective"})
 
-url="https://apis.naver.com/selectiveweb/selectiveweb/v1/lives/timeline/daily/"
-
+milestones_url = "https://apis.naver.com/selectiveweb/live_commerce_web/v2/broadcast/milestones"
+milestones = requests.get(milestones_url).json()
 params = ""
 
-while(True):
-    data=requests.get(url+params)
+for ms in milestones:
+    # 현재 날짜가 3번째에 표시됨
+    timestamp = ms['milestone']['timestamp']
+    url=f"https://apis.naver.com/selectiveweb/selectiveweb/v1/lives/timeline/daily/?next={timestamp}&size=30"
+
+    data=requests.get(url)
     itemList=json.loads(data.text)
-    
-    if not itemList['next']: break
-        
-    params="?next="+str(itemList['next'])
-    
+
     for i in range(0,len(itemList["list"])):
         data = {}
         data['_uniq']="naverselective"+str(itemList['list'][i]['broadcastId'])
@@ -39,7 +39,7 @@ while(True):
         data['category']=itemList['list'][i]['serviceName']
         data['platform']="naverselective"
         data['regular']=False
-        time = datetime.strptime(itemList['list'][i]['expectedStartDate'], '%Y-%m-%dT%H:%M:%S')
+        time = datetime.strptime(itemList['list'][i]['expectedStartDate'].split('.')[0], '%Y-%m-%dT%H:%M:%S')
         if time.minute == 0:
             m = "00"
         else:
@@ -63,6 +63,8 @@ while(True):
         data['year']=time.year
         data['month']=time.month
         data['day']=time.day
+        
+        print(data)
         
         collection.insert_one(data)
     
