@@ -34,7 +34,7 @@ for ms in milestones:
         data['channelID']=str(itemList['list'][i]['broadcastId'])
         data['title']=itemList['list'][i]['broadcastTitle']
         data['description']=itemList['list'][i]['displayProduct']['name'] if itemList['list'][i]['displayProduct']['name'] else ""
-        data['image']=itemList['list'][i]['broadcastBridgeMobileImage']
+        data['image']=itemList['list'][i]['broadcastStandByImage']
         data['url']=itemList['list'][i]['broadcastEndUrl']
         data['category']=itemList['list'][i]['serviceName']
         data['platform']="naverselective"
@@ -63,8 +63,7 @@ for ms in milestones:
         data['year']=time.year
         data['month']=time.month
         data['day']=time.day
-        
-        print(data)
-        
-        collection.insert_one(data)
+                
+        #collection.insert_one(data)
+        collection.update_one({'_uniq': data['_uniq']}, {"$set": data}, upsert=True)
     
