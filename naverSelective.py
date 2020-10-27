@@ -13,7 +13,7 @@ mongo_auth = {
 conn = MongoClient('mongodb://%s:%s@%s:%s' % (mongo_auth['username'], mongo_auth['password'], mongo_auth['hostname'], mongo_auth['port']), connect=False)
 db = conn['meerkatonair']
 collection = db['schedule_list']
-# collection.delete_many({"platform":"naverselective"})
+#collection.delete_many({"platform":"naverselective"})
 
 milestones_url = "https://apis.naver.com/selectiveweb/live_commerce_web/v2/broadcast/milestones"
 milestones = requests.get(milestones_url).json()
@@ -63,7 +63,5 @@ for ms in milestones:
         data['year']=time.year
         data['month']=time.month
         data['day']=time.day
-                
-        #collection.insert_one(data)
-        collection.update_one({'_uniq': data['_uniq']}, {"$set": data}, upsert=True)
-    
+
+        collection.update_one({'_uniq': data['platform'] + data['channelID']}, {"$set": data}, upsert=True)

@@ -12,7 +12,7 @@ from requests_utils import *
 from selenium import webdriver
 # from pathos.multiprocessing import ProcessingPool as Pool #pip install pathos
 from multiprocessing import Pool
-from elasticsearch import Elasticsearch, helpers
+from elasticsearch import Elasticsearch, helpers, RequestsHttpConnection
 
 
 class LiveCrawling():
@@ -105,7 +105,7 @@ class LiveCrawling():
                 self.dataset['creatorDataHref'] = url
                 self.dataset['creatorDataName'] = soup.select_one('.channel_info_area .name').text
                 self.dataset['creatorDataLogo'] = soup.select_one('.img_thumb.ng-star-inserted')['src']
-                self.dataset['language'] = 'kr'
+                self.dataset['language'] = 'ko'
                 self.dataset['onLive'] = True
                 src = soup.select_one('.onair .article_link .article_img img')['src']
                 self.dataset['imgDataSrc'] = replace_ascii(src).split('src="')[-1].split('"&')[0]
@@ -169,6 +169,7 @@ class LiveCrawling():
                             obj = v['channelMetadataRenderer']
                             self.dataset['description'] = obj['description']
                             self.dataset['creatorDataHref'] = obj['channelUrl']
+                            self.dataset['category'], self.dataset['detail'] = parse_category(self.platform, self.channelID)
                             # print(obj['keywords'])
 
                         elif k == 'contents':
@@ -180,7 +181,7 @@ class LiveCrawling():
                                 self.dataset['imgDataSrc'] = obj['thumbnail']['thumbnails'][-1]['url']
                                 self.dataset['liveDataTitle'] = obj['title']['runs'][0]['text']
 
-                                self.dataset['liveAttdc'] = int(obj['viewCountText']['runs'][0]['text'].replace('명 시청 중','').replace(',',''))
+                                self.dataset['liveAttdc'] = int(obj['viewCountText']['runs'][0]['text'].replace('명 시청 중','').replace(',','').replace(' watching',''))
                                 self.dataset['onLive'] = True
                                 # print(obj['badges'][0]['metadataBadgeRenderer']['style'])
                                 # print(obj['badges'][0]['metadataBadgeRenderer']['label'])
@@ -236,7 +237,7 @@ class LiveCrawling():
                 self.dataset['creatorDataHref'] = "http://bj.afreecatv.com/" + self.channelID
                 self.dataset['creatorDataName'] = urlJsonData['station']['user_nick']
                 self.dataset['creatorDataLogo'] = "http://stimg.afreecatv.com/LOGO/" + self.channelID[:2] + "/"+ self.channelID + "/"+ self.channelID + ".jpg"
-                self.dataset['language'] = 'kr'               
+                self.dataset['language'] = 'ko'               
                 self.dataset['description'] = ''
                 self.dataset['subscriberCount'] = 0
                 self.dataset['onLive'] = True
@@ -292,8 +293,7 @@ def mongo_insert(mongo_auth, results):
     conn.close()
 
 def requestElastic(results):
-    es = Elasticsearch('49.247.19.124:9200',scheme="http")
-
+    es = Elasticsearch('https://elastic:J4XayCYey1pXX3vJuF6v@49.247.19.124:9200', verify_certs=False, connection_class=RequestsHttpConnection)
     docs = []
     for result in results:
         if result != None:
