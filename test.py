@@ -5,10 +5,11 @@ from bs4 import BeautifulSoup
 import re
 
 
-channelID = 'UCX2laRqGQhqoChYmlaUgOiw'
+with open ('UCs0LzOveQMLImmmTrMmP2sg.txt', 'r', encoding='utf-8') as f:
+    text = f.read()
 
-res = requests.get('https://www.youtube.com/channel/' + channelID, timeout=5)
-soup = BeautifulSoup(res.text, 'html.parser')
+matched = re.search(r'window\[\"ytInitialData\"\] = (.+?)};', text, re.S)
+# matched = re.search(r'var ytInitialData = (.+?)};', text, re.S)
+# json_string = json.loads(matched.group(1)+'}')
 
-link = soup.select('div.yt-lockup-dismissable')
-print(soup)
+print(matched== None)

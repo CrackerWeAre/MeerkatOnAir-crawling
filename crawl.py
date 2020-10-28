@@ -129,10 +129,12 @@ class LiveCrawling():
             link = soup.select('div.yt-lockup-dismissable')
 
             try:
+
                 linkData =  link[0].select('div.yt-lockup-content')
                 dataLiveConfirm = linkData[0].select_one('a')['data-sessionlink']
 
                 if dataLiveConfirm.find('live') > 0 :
+
                     liveData = link[0].select_one('div.yt-lockup-content > h3 > a')
                     AttdData = link[0].select_one('div.yt-lockup-content > div.yt-lockup-meta > ul > li ')
                     creatorData = link[0].select_one('div.yt-lockup-content > div.yt-lockup-byline > a')
@@ -153,6 +155,9 @@ class LiveCrawling():
             except IndexError:
                 try:
                     matched = re.search(r'window\[\"ytInitialData\"\] = (.+?)};', urldata.text, re.S)
+                    if not matched:
+                        matched = re.search(r'var ytInitialData = (.+?)};', urldata.text, re.S)
+
                     json_string = json.loads(matched.group(1)+'}')
 
                     for k, v in json_string.items():
@@ -190,9 +195,11 @@ class LiveCrawling():
                                 pass
 
                 except Exception as e:
-                    print(self.channelID, e)
+                    print(self.channelID, e, self.dataset)
+
         else:
             print(self.platform, self.channelID, urldata.status_code)
+
     
     def twitch(self):
         url, headers = platform_headers(self.platform, self.channelID, auth = self.auth)
@@ -284,10 +291,10 @@ def mongo_insert(mongo_auth, results):
             platform, channelID, data = result
             if not data == {}:
                 post_id = collection.update_one({'_uniq': platform + channelID}, {"$set": data}, upsert=True)
-                print(platform.upper(), channelID, 'UPDATED')
+                # print(platform.upper(), channelID, 'UPDATED')
             else:
                 success -= 1
-                print(platform.upper(), channelID, 'NOT UPDATED')
+                # print(platform.upper(), channelID, 'NOT UPDATED')
 
     print("SUCCESS [%d/%d]" %(success, len(results)))
     conn.close()
@@ -334,6 +341,12 @@ if __name__ == '__main__':
     s = time.time()    
     results = pool.map(multiprocess,[list(i.items()) for i in list(target)])
 
+    print('Insert to MongoDB ...')
     mongo_insert(mongo_auth, results)
+    print('Insert to MongoDB END')
+
+    print('Insert to Elasticsearch ...')
     requestElastic(results)
+    print('Insert to Elasticsearch END')
+
     print('Total : ', time.time() -s)
