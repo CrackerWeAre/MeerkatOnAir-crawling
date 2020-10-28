@@ -123,13 +123,12 @@ class LiveCrawling():
  
         url, _ = platform_headers(self.platform, self.channelID)
         urldata = requests.get(url + '/channel/' + self.channelID, timeout=5)
-
+        
         if urldata.status_code == 200:
             soup = BeautifulSoup(urldata.text, 'html.parser')
             link = soup.select('div.yt-lockup-dismissable')
 
             try:
-
                 linkData =  link[0].select('div.yt-lockup-content')
                 dataLiveConfirm = linkData[0].select_one('a')['data-sessionlink']
 
@@ -159,6 +158,10 @@ class LiveCrawling():
                         matched = re.search(r'var ytInitialData = (.+?)};', urldata.text, re.S)
 
                     json_string = json.loads(matched.group(1)+'}')
+                    
+                    if self.channelID == 'UCn0nlepACCBD6rxj-GUwn5A':
+                        with open(self.channelID + '.json', 'w', encoding='utf-8') as f:
+                            json.dump(json_string, f, ensure_ascii=False)
 
                     for k, v in json_string.items():
                         if k == 'header':
@@ -190,8 +193,10 @@ class LiveCrawling():
                                 self.dataset['onLive'] = True
                                 # print(obj['badges'][0]['metadataBadgeRenderer']['style'])
                                 # print(obj['badges'][0]['metadataBadgeRenderer']['label'])
+                            
                             # 라이브가 아닐 때,
                             except KeyError as e:
+                                print(self.channelID, e)
                                 pass
 
                 except Exception as e:
